@@ -14,8 +14,10 @@ collectionsApp.frame('/', (c) => {
     image: '/insert-token.gif',
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>goo bbd</Button>, //so this goes to this page
-      <Button.Reset>reset settre</Button.Reset>,
+      <Button action='/'>⬅️</Button>,
+      <Button action='/'>➡️</Button>, 
+      <Button action='/'>Pick! ✅</Button>, 
+      <Button.Reset>Reset</Button.Reset>,
     ],
   })
 })

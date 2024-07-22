@@ -3,13 +3,17 @@ import { Button, Frog, TextInput } from 'frog'
 //import { neynar } from 'frog/hubs'
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
-
+import { neynar } from 'frog/hubs';
 import { collectionsApp } from './collections.js'
 
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 
 const title = 'edpon';
 
+const neynarMiddleware = neynar({
+  apiKey: 'NEYNAR_FROG_FM',
+  features: ['interactor', 'cast'],
+})
 export const app = new Frog({
   title,
   assetsPath: '/',
@@ -20,12 +24,15 @@ export const app = new Frog({
 
 app.use('/*', serveStatic({ root: './public' }))
 
-app.frame('/', (c) => {
+app.frame('/', neynarMiddleware, (c) => {
+  console.log(`interactor: ${c.var.interactor}`)
   return c.res({
     title,
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
-    intents: [<Button action='/test'>PLAY 🕹️</Button>],
+    intents: [<Button action='/collections'>PLAY 🕹️</Button>,
+    ],
+    
   })
 })
 
