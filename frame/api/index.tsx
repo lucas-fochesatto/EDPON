@@ -16,7 +16,7 @@ export const app = new Frog({
   title,
   assetsPath: '/',
   basePath: '/',
-  browserLocation: '/',
+  // browserLocation: '/',
   ui: { vars },
   // Supply a Hub to enable frame verification.
   //hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
