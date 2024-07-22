@@ -22,36 +22,41 @@ export const createArtCollection = async (req, res, next) => {
         // Add server timestamp to the data
         data.createdAt = serverTimestamp();
 
+        // Add the new art collection to the "artCollections" collection
         const docRef = await addDoc(collection(db, "artCollections"), data);
 
-        // Assign artCollectionId to the artCollection
-        const artCollectionId = docRef.id;
-        await updateDoc(doc(db, "artCollections", artCollectionId), {
-            artCollectionId,
-        });
-
-        // Add artCollectionId to the user's artCollectionsId array
+        // Retrieve the creator's document reference
         const creatorId = data.creatorId; // Assuming creatorId is present in the artCollection data
         const creatorRef = doc(db, "creators", creatorId);
-        const userDoc = await getDoc(creatorRef);
+        const creatorDoc = await getDoc(creatorRef);
 
-        if (userDoc.exists()) {
-            const creatorData = userDoc.data();
-            const updatedArtCollectionsId = [
-                ...creatorData.artCollectionsId,
+        if (creatorDoc.exists()) {
+            const creatorData = creatorDoc.data();
+
+            // Assign artCollectionId and creatorName to the new art collection
+            const artCollectionId = docRef.id;
+            const creatorName = creatorData.name;
+
+            console.log("creatorData", creatorData);
+            await updateDoc(doc(db, "artCollections", artCollectionId), {
                 artCollectionId,
-            ]; // Add new artCollectionId to the existing artCollectionsId array
+                creatorName,
+            });
 
-            // Update the user document with the modified artCollectionsId array
+            // Update the creator's artCollectionsId array
+            const updatedArtCollectionsId = creatorData.artCollectionsId
+                ? [...creatorData.artCollectionsId, artCollectionId]
+                : [artCollectionId];
+
+            // Update the creator document with the new artCollectionsId array
             await updateDoc(creatorRef, {
                 artCollectionsId: updatedArtCollectionsId,
             });
         } else {
-            // throw new Error("Creator not found");
-            console.log("Creator not found");
+            throw new Error("Creator not found");
         }
 
-        res.status(200).send("artCollection created successfully");
+        res.status(200).send("Art collection created successfully");
     } catch (error) {
         res.status(400).send(error.message);
     }
@@ -86,6 +91,7 @@ export const getArtCollections = async (req, res, next) => {
                     doc.data().artCollectionId,
                     doc.data().creatorId,
                     doc.data().creatorName,
+                    doc.data().collectionName,
                     doc.data().collectionCoverUrl,
                     doc.data().description,
                     doc.data().price,
@@ -115,7 +121,7 @@ export const getCreators = async (req, res, next) => {
                     doc.data().creatorId,
                     doc.data().wallet,
                     doc.data().name,
-                    doc.data().artCollectionId
+                    doc.data().artCollectionsId
                 );
                 creatorsArray.push(user);
             });
@@ -144,7 +150,7 @@ export const getCreatorByWallet = async (req, res, next) => {
                         doc.data().creatorId,
                         doc.data().wallet,
                         doc.data().name,
-                        doc.data().artCollectionId
+                        doc.data().artCollectionsId
                     );
                 }
             });
@@ -170,6 +176,79 @@ export const getArtCollection = async (req, res, next) => {
         } else {
             res.status(404).send("artCollection not found");
         }
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
+
+// super simple update function (not recommended for production)
+export const updateCreator = async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        const senderId = req.user.id;
+        const data = req.body;
+
+        const creatorRef = doc(db, "creators", id);
+        const creatorDoc = await getDoc(creatorRef);
+
+        if (!creatorDoc.exists()) {
+            return res.status(404).send("Creator not found");
+        }
+
+        if (senderId !== creatorDoc.id) {
+            return res
+                .status(403)
+                .send("Unauthorized to update this creator's information");
+        }
+
+        await updateDoc(creatorRef, data);
+        res.status(200).send("Creator updated successfully");
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+};
+
+// get random creator and random art collection from this creator
+export const getAllRandom = async (req, res, next) => {
+    try {
+        const creatorsSnapshot = await getDocs(collection(db, "creators"));
+        const creatorsArray = [];
+
+        if (creatorsSnapshot.empty) {
+            return res.status(400).send("No creators found");
+        }
+
+        creatorsSnapshot.forEach((doc) => {
+            const creatorData = doc.data();
+            creatorsArray.push({
+                creatorId: creatorData.creatorId,
+                wallet: creatorData.wallet,
+                name: creatorData.name,
+                artCollectionsId: creatorData.artCollectionsId,
+            });
+        });
+
+        // Select a random creator from the array
+        const randomCreatorIndex = Math.floor(
+            Math.random() * creatorsArray.length
+        );
+        const randomCreator = creatorsArray[randomCreatorIndex];
+
+        // Select a random artCollectionsId from the chosen creator
+        const randomArtCollectionIndex = Math.floor(
+            Math.random() * randomCreator.artCollectionsId.length
+        );
+        const randomArtCollectionId =
+            randomCreator.artCollectionsId[randomArtCollectionIndex];
+
+        // Create the response object
+        const responseObject = {
+            creator: randomCreator,
+            randomArtCollectionId: randomArtCollectionId,
+        };
+
+        // Send the response
+        res.status(200).send(responseObject);
     } catch (error) {
         res.status(400).send(error.message);
     }
@@ -229,6 +308,7 @@ export const getCreatorArtCollections = async (req, res, next) => {
                         doc.data().artCollectionId,
                         doc.data().creatorId,
                         doc.data().creatorName,
+                        doc.data().collectionName,
                         doc.data().collectionCoverUrl,
                         doc.data().description,
                         doc.data().price,

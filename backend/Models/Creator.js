@@ -1,9 +1,9 @@
 class Creator {
-    constructor( CreatorId, wallet, name, artCollectionId) {
-        (this.CreatorId = CreatorId),
+    constructor( creatorId, wallet, name, artCollectionsId) {
+        (this.creatorId = creatorId),
         (this.wallet = wallet),
         (this.name = name),
-        (this.artCollectionId = artCollectionId)
+        (this.artCollectionsId = artCollectionsId)
     }
 }
 
