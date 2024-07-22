@@ -5,33 +5,31 @@ import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { neynar } from 'frog/hubs';
 import { collectionsApp } from './collections.js'
-import { handle } from 'frog/next' ;
-import {NeynarAPIClient} from 'neynar'
+import { Box, Heading, Text, VStack, vars } from "./ui.js"
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 
 const title = 'edpon';
 
 const neynarMiddleware = neynar({
   apiKey: 'NEYNAR_FROG_FM',
-  features:['interactor', 'cast'],
 })
 export const app = new Frog({
   title,
   assetsPath: '/',
   basePath: '/',
+  ui: { vars },
   // Supply a Hub to enable frame verification.
   //hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
 
 app.use('/*', serveStatic({ root: './public' }))
 
-app.frame('/', neynarMiddleware, (c) => {
-  console.log(`interactor: ${c.var.interactor}`)
+app.frame('/', (c) => {
   return c.res({
     title,
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
-    intents: [<Button action='/collections'>PLAY 🕹️</Button>,
+    intents: [<Button action='/test'>PLAY 🕹️</Button>,
     ],
     
   })
@@ -40,7 +38,21 @@ app.frame('/', neynarMiddleware, (c) => {
 app.frame('/test', (c) => {
   return c.res({
     title,
-    image: '/pokeball.gif',
+    image: (
+      <Box
+      grow
+      alignHorizontal="center"
+      backgroundColor="background"
+      padding="32"
+    >
+      <VStack gap="4">
+        <Heading>FrogUI 🐸</Heading>
+        <Text color="text200" size="20">
+          Build consistent frame experiences
+        </Text>
+      </VStack>
+    </Box>
+    ),
     imageAspectRatio: '1:1',
     intents: [
       <Button action='/'>go back</Button>,
