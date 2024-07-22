@@ -4,6 +4,8 @@ import { Button, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { neynar } from 'frog/hubs';
+import { collectionsApp } from './collections.js'
+import { Box, Heading, Text, VStack, vars } from "./ui.js"
 import { handle } from 'frog/next';
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 import { collectionsApp } from './collections.js'
@@ -15,6 +17,7 @@ export const app = new Frog({
   title,
   assetsPath: '/',
   basePath: '/',
+  ui: { vars },
   // Supply a Hub to enable frame verification.
   //hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
@@ -36,10 +39,24 @@ app.frame('/', (c) => {
 app.frame('/verify', (c) => {
   return c.res({
     title,
-    image: '/pokeball.gif',
+    image: (
+      <Box
+      grow
+      alignHorizontal="center"
+      backgroundColor="background"
+      padding="32"
+    >
+      <VStack gap="4">
+        <Heading>FrogUI 🐸</Heading>
+        <Text color="text200" size="20">
+          Build consistent frame experiences
+        </Text>
+      </VStack>
+    </Box>
+    ),
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>go back</Button>,
+      <Button action='/'>back</Button>,
       <Button action='/collections'>go collections</Button>,
       <Button action='/verifications'>verify</Button>,
       <Button.Reset>reset test</Button.Reset>,
