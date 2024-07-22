@@ -5,14 +5,15 @@ import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { neynar } from 'frog/hubs';
 import { collectionsApp } from './collections.js'
-
+import { handle } from 'frog/next' ;
+import {NeynarAPIClient} from 'neynar'
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 
 const title = 'edpon';
 
 const neynarMiddleware = neynar({
   apiKey: 'NEYNAR_FROG_FM',
-  features: ['interactor', 'cast'],
+  features:['interactor', 'cast'],
 })
 export const app = new Frog({
   title,
