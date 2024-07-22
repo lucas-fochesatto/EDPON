@@ -29,7 +29,7 @@ app.frame('/', (c) => {
     title,
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
-    intents: [<Button action='/test'>PLAY 🕹️</Button>,
+    intents: [<Button action='/collections'>PLAY 🕹️</Button>,
     ],
     
   })
