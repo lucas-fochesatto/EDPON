@@ -6,13 +6,13 @@ import { serve } from '@hono/node-server';
 import { neynar } from 'frog/hubs';
 import { collectionsApp } from './collections.js'
 import { Box, Heading, Text, VStack, vars } from "./ui.js"
+import { handle } from 'frog/next';
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
+import { collectionsApp } from './collections.js'
+// import { verificationsApp } from './verification.js'
 
 const title = 'edpon';
 
-const neynarMiddleware = neynar({
-  apiKey: 'NEYNAR_FROG_FM',
-})
 export const app = new Frog({
   title,
   assetsPath: '/',
@@ -29,13 +29,14 @@ app.frame('/', (c) => {
     title,
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
-    intents: [<Button action='/collections'>PLAY 🕹️</Button>,
+    intents: [
+      <Button action='/verify'>PLAY 🕹️</Button>,
     ],
-    
+
   })
 })
 
-app.frame('/test', (c) => {
+app.frame('/verify', (c) => {
   return c.res({
     title,
     image: (
@@ -57,12 +58,14 @@ app.frame('/test', (c) => {
     intents: [
       <Button action='/'>back</Button>,
       <Button action='/collections'>go collections</Button>,
+      <Button action='/verifications'>verify</Button>,
       <Button.Reset>reset test</Button.Reset>,
     ],
   })
 })
 
 app.route('/collections', collectionsApp);
+// app.route('/verifications', verificationsApp);
 
 if (process.env.NODE_ENV !== 'production') {
   devtools(app, { serveStatic });
