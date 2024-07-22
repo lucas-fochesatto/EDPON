@@ -3,11 +3,9 @@ import { Button, Frog, TextInput } from 'frog'
 //import { neynar } from 'frog/hubs'
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
-import { neynar } from 'frog/hubs';
-import { collectionsApp } from './collections.js'
-import { Box, Heading, Text, VStack, vars } from "./ui.js"
-import { handle } from 'frog/next';
+import { Box, Heading, Text, VStack, vars } from "../lib/ui.js"
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
+
 import { collectionsApp } from './collections.js'
 // import { verificationsApp } from './verification.js'
 

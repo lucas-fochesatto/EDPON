@@ -1,5 +1,5 @@
 import { Button, Frog } from 'frog';
-import { Box, Heading, Text, VStack, Image, vars } from "./ui.js";
+import { Box, Heading, Text, VStack, Image, vars } from "../lib/ui.js";
 
 const title = 'edpon collections';
 
