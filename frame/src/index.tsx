@@ -55,7 +55,7 @@ app.frame('/test', (c) => {
     ),
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>go back</Button>,
+      <Button action='/'>back</Button>,
       <Button action='/collections'>go collections</Button>,
       <Button.Reset>reset test</Button.Reset>,
     ],
