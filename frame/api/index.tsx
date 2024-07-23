@@ -7,6 +7,8 @@ import { serve } from '@hono/node-server';
 import { Box, Heading, Text, VStack, vars } from "../lib/ui.js"
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 
+import { dbapi } from '../lib/dbapi.js';
+
 import { collectionsApp } from './collections.js'
 // import { verificationsApp } from './verification.js'
 
@@ -58,7 +60,35 @@ app.frame('/verify', (c) => {
     intents: [
       <Button action='/'>back</Button>,
       <Button action='/collections'>go collections</Button>,
-      <Button action='/verifications'>verify</Button>,
+      <Button action='/dbtest'>dbtest</Button>,
+      <Button.Reset>reset test</Button.Reset>,
+    ],
+  })
+})
+
+app.frame('/dbtest', async (c) => {
+  const data = await dbapi.getRandomCreatorAndArtCollection() as any
+
+  return c.res({
+    title,
+    image: (
+      <Box
+      grow
+      alignHorizontal="center"
+      backgroundColor="background"
+      padding="32"
+    >
+      <VStack gap="4">
+        <Heading>FrogUI 🐸</Heading>
+        <Text color="text200" size="20">
+          {data.randomArtCollectionId}
+        </Text>
+      </VStack>
+    </Box>
+    ),
+    imageAspectRatio: '1:1',
+    intents: [
+      <Button action='/'>back</Button>,
       <Button.Reset>reset test</Button.Reset>,
     ],
   })
