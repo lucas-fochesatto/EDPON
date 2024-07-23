@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hono/node-server": "latest",
+    "dotenv": "^16.4.5",
     "firebase": "^10.12.4",
     "frog": "latest",
     "hono": "^4"
