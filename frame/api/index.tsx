@@ -1,7 +1,7 @@
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Button, Frog, TextInput } from 'frog'
 //import { neynar } from 'frog/hubs'
-import { handle } from 'frog/vercel' 
+// import { handle } from 'frog/vercel' 
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { Box, Heading, Text, VStack, vars } from "../lib/ui.js"
@@ -15,7 +15,7 @@ const title = 'edpon';
 export const app = new Frog({
   title,
   assetsPath: '/',
-  basePath: '/',
+  basePath: '/api',
   // browserLocation: '/',
   ui: { vars },
   // Supply a Hub to enable frame verification.
@@ -73,7 +73,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 serve({ fetch: app.fetch, port: Number(process.env.PORT) || 5173 });
 
-console.log(`Server started: ${new Date()} `);
+// console.log(`Server started: ${new Date()} `);
 
-export const GET = handle(app)
-export const POST = handle(app)
+// export const GET = handle(app)
+// export const POST = handle(app)

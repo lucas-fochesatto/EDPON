@@ -10,7 +10,7 @@ export const collectionsApp = new Frog({
   ui: { vars },
 })
 
-collectionsApp.frame('/', (c) => {
+collectionsApp.frame('/', async (c) => {
   return c.res({
     title,
     image: (
