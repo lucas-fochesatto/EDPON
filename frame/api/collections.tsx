@@ -3,8 +3,8 @@ import { vars } from "../lib/ui.js";
 
 const title = 'edpon collections';
 
-const collectionNames = ['Milady', 'Col2', 'Col3', 'Col4'];
-const artistNames = ['Remilia', 'Art2', 'Art3', 'Art4'];
+const collectionNames = ['Milady', 'I need Coffee', 'Col3', 'Col4'];
+const artistNames = ['Remilia', 'KWS', 'Art3', 'Art4'];
 export const collectionsApp = new Frog({
   title,
   assetsPath: '/',
@@ -21,23 +21,19 @@ collectionsApp.frame('/:id', (c) => {
     image: (
         <div
           style={{
-            color: 'green',
+            color: '#81BAEC',
             display: 'flex',
             flexDirection: 'column',
             textAlign: 'center',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundImage: "url(https://i.imgur.com/IcfnuQ0.png)",
+            // backgroundImage: "url(https://i.imgur.com/IcfnuQ0.png)",
             fontSize: 60,
-            backgroundGrow: 'true',
             backgroundSize: "cover",
-            // backgroundWidth:"100%",
             backgroundPosition: 'top center',
             height: "100%",
             width:"100%",
             backgroundRepeat: 'no-repeat',
-            margin: 0,
-            padding: 32,
           }}
         >
           <p style={{
