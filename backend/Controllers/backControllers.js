@@ -89,6 +89,7 @@ export const getArtCollections = async (req, res, next) => {
                 const artCollection = new ArtCollection(
                     // doc.id,
                     doc.data().artCollectionId,
+                    doc.data().artCollectionAddress,
                     doc.data().creatorId,
                     doc.data().creatorName,
                     doc.data().collectionName,
@@ -306,6 +307,7 @@ export const getCreatorArtCollections = async (req, res, next) => {
                 if (doc.data().creatorId === creatorId) {
                     const artCollection = new ArtCollection(
                         doc.data().artCollectionId,
+                        doc.data().artCollectionAddress,
                         doc.data().creatorId,
                         doc.data().creatorName,
                         doc.data().collectionName,
