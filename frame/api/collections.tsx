@@ -1,10 +1,11 @@
 import { Button, Frog } from 'frog';
-import { vars } from "../lib/ui.js";
+import { Box, Heading, Text, VStack, Image, vars } from "../lib/ui.js";
 
 const title = 'edpon collections';
 
 const collectionNames = ['Milady', 'I need Coffee', 'Col3', 'Col4'];
 const artistNames = ['Remilia', 'KWS', 'Art3', 'Art4'];
+
 export const collectionsApp = new Frog({
   title,
   assetsPath: '/',
