@@ -1,11 +1,11 @@
 import { serveStatic } from '@hono/node-server/serve-static'
-import { Button, Frog, TextInput, parseEther} from 'frog' 
+import { Button, Frog, TextInput } from 'frog'
 import { handle } from 'frog/vercel'
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { getFarcasterUserInfo } from '../lib/neynar';
 import { vars } from "../lib/ui.js"
-import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
+// import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 
 // *****************************************************************************************************
@@ -20,9 +20,7 @@ import { dbapi } from '../lib/dbapi.js';
 
 
 const title = 'edpon';
-const CUSTOM_COLLECTIONS = '0xe88035cbc6703b18e2899fe2b5f6e435f00ade41';
-const collectionNames = ['Milady', 'I need Coffee', 'Col3', 'Col4'];
-const artistNames = ['Remilia', 'KWS', 'Art3', 'Art4'];
+// const CUSTOM_COLLECTIONS = '0xe88035cbc6703b18e2899fe2b5f6e435f00ade41';
 
 export const app = new Frog({
   title,
@@ -38,6 +36,7 @@ export const app = new Frog({
     verifiedAddresses: [],
   },
 })
+
 app.use('/*', serveStatic({ root: './public' }))
 
 // Home frame
@@ -115,39 +114,39 @@ app.frame('/collections/:id', async (c) => {
   return c.res({
     title: collectionName,
     image: (
-        <div
-          style={{
-            color: '#81BAEC',
-            display: 'flex',
-            flexDirection: 'column',
-            textAlign: 'center',
-            alignItems: 'center',
-            justifyContent: 'center',
-            // backgroundImage: "url(https://i.imgur.com/IcfnuQ0.png)",
-            fontSize: 60,
-            backgroundSize: "cover",
+      <div
+        style={{
+          color: '#81BAEC',
+          display: 'flex',
+          flexDirection: 'column',
+          textAlign: 'center',
+          alignItems: 'center',
+          justifyContent: 'center',
+          // backgroundImage: "url(https://i.imgur.com/IcfnuQ0.png)",
+          fontSize: 60,
+          backgroundSize: "cover",
           backgroundPosition: 'center',
-            height: "100%",
+          height: "100%",
           width: "100%",
-            backgroundRepeat: 'no-repeat',
-          }}
-        >
-          <p style={{
-            margin: 0,
-          }}>{collectionName}</p>
-          <p style={{
-            color: 'white',
-            fontSize: 30,
-            margin: 0,
-          }}
-          >{artistName}</p>
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        <p style={{
+          margin: 0,
+        }}>{collectionName}</p>
+        <p style={{
+          color: 'white',
+          fontSize: 30,
+          margin: 0,
+        }}
+        >{artistName}</p>
       </div>
     ),
     imageAspectRatio: '1:1',
     intents: [
       <TextInput placeholder="Value (ETH)" />,
-      <Button action={`/collections/${index===0?(collectionNames.length-1):(((index-1)%collectionNames.length))}`}>⬅️</Button>,
-      <Button action={`/collections/${((index+1)%collectionNames.length)}`}>➡️</Button>, 
+      <Button action={`/collections/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
+      <Button action={`/collections/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
       // <Button.Transaction action='/loading' target="/mint">Pick! ✅</Button.Transaction>, 
       <Button.Reset>Reset</Button.Reset>,
     ],
