@@ -1,11 +1,12 @@
 import { serveStatic } from '@hono/node-server/serve-static'
-import { Button, Frog, TextInput } from 'frog'
+import { Button, Frog, parseEther} from 'frog'
 import { handle } from 'frog/vercel'
+import { encodeAbiParameters } from 'viem';
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { getFarcasterUserInfo } from '../lib/neynar';
 import { vars } from "../lib/ui.js"
-// import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
+import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 
 // *****************************************************************************************************
@@ -20,7 +21,11 @@ import { dbapi } from '../lib/dbapi.js';
 
 
 const title = 'edpon';
-// const CUSTOM_COLLECTIONS = '0xe88035cbc6703b18e2899fe2b5f6e435f00ade41';
+const CUSTOM_COLLECTIONS = '0xe88035cbc6703b18e2899fe2b5f6e435f00ade41';
+const minter = '0x04E2516A2c207E84a1839755675dfd8eF6302F0a';
+const tokenId = '1'
+const quantity = 1n;
+
 
 export const app = new Frog({
   title,
@@ -46,14 +51,14 @@ app.frame('/', (c) => {
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/verify'>PLAY 🕹️</Button>,
+      <Button action='/verify/0'>PLAY 🕹️</Button>,
     ],
 
   })
 })
 
 // verify Farcaster fid 
-app.frame('/verify', async (c) => {
+app.frame('/verify/:id', async (c) => {
   if (c.frameData?.fid) {
     const { verifiedAddresses } = await getFarcasterUserInfo(c.frameData?.fid);
     if (!verifiedAddresses || verifiedAddresses.length === 0) {
@@ -81,23 +86,6 @@ app.frame('/verify', async (c) => {
     prevState.collections = collectionsInfo as any;
   })
 
-  // console.log(collectionsInfo)
-
-  return c.res({
-    headers: {
-      'cache-control': 'max-age=0',
-    },
-    title,
-    image: '/collectionPicker.png',
-    imageAspectRatio: '1:1',
-    intents: [
-      <Button action="/collections/0">Search Collection</Button>,
-      <Button.Reset>RESET</Button.Reset>,
-    ],
-  });
-});
-
-app.frame('/collections/:id', async (c) => {
   const index = Number(c.req.param('id'));
 
   const collections =
@@ -144,33 +132,44 @@ app.frame('/collections/:id', async (c) => {
     ),
     imageAspectRatio: '1:1',
     intents: [
-      <TextInput placeholder="Value (ETH)" />,
-      <Button action={`/collections/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
-      <Button action={`/collections/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
-      // <Button.Transaction action='/loading' target="/mint">Pick! ✅</Button.Transaction>, 
+      <Button action={`/verify/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
+      <Button action={`/verify/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
+      <Button.Transaction action='/loading' target="/mint">Pick! ✅</Button.Transaction>, 
       <Button.Reset>Reset</Button.Reset>,
     ],
   })
-})
+});
 
-// app.transaction('/mint', (c) => {
-//   const { inputText } = c
-//   // Send transaction response.
-//   return c.contract({
-//     zora1155Implementation,
-//     chainId: 'eip155:11155111',
-//     functionName: 'mintWithRewards',
-//     args: [
-//       minter,
-//       tokenId, 
-//       quantity,
-//       minterArguments,
-//       '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
-//       to: CUSTOM_COLLECTIONS,
-//       value: parseEther('0.000777').toString,
-//     ],
-//   })
-// })
+
+
+
+app.transaction('/mint', async (c) => {
+  const verifiedAddresses=
+  (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0
+    ? (c.previousState as any).verifiedAddresses
+    : ( (c.previousState as any).verifiedAddresses  = await getFarcasterUserInfo(c.frameData?.fid));
+    const minterArguments = encodeAbiParameters(
+      [
+        { name: 'mintTo', type: 'address' },
+        { name: 'comment', type: 'string' },
+      ],
+      [verifiedAddresses[0], `Collected from Kismet Casa's Gachapon Frame`],
+    );
+   return c.contract({
+     abi: zora1155Implementation,
+     chainId: 'eip155:11155111',
+     functionName: 'mintWithRewards',
+     args: [
+       minter,
+       BigInt(tokenId), 
+       quantity,
+       minterArguments,
+       '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
+     ],
+     to: CUSTOM_COLLECTIONS,
+     value: parseEther('0.000777'),
+   })
+})
 
 app.frame('/loading', async (c) => {
   const name = 'test'
