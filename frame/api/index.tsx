@@ -1,5 +1,5 @@
 import { serveStatic } from '@hono/node-server/serve-static'
-import { Button, Frog, TextInput } from 'frog'
+import { Button, Frog, TextInput, parseEther} from 'frog'
 //import { neynar } from 'frog/hubs'
 // import { handle } from 'frog/vercel' 
 import { devtools } from 'frog/dev';
@@ -8,7 +8,7 @@ import { getFarcasterUserInfo } from '../lib/neynar';
 import { Box, Heading, Text, VStack, vars } from "../lib/ui.js"
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 
-import { dbapi } from '../lib/dbapi.js';
+// import { dbapi } from '../lib/dbapi.js';
 
 // import { collectionsApp } from './collections.js'
 // import { verificationsApp } from './verification.js'
@@ -143,43 +143,80 @@ app.frame('/collections/:id', (c) => {
     ),
     imageAspectRatio: '1:1',
     intents: [
+      <TextInput placeholder="Value (ETH)" />,
       <Button action={`/collections/${index===0?(collectionNames.length-1):(((index-1)%collectionNames.length))}`}>⬅️</Button>,
       <Button action={`/collections/${((index+1)%collectionNames.length)}`}>➡️</Button>, 
-      <Button action='/'>Pick! ✅</Button>, 
+      <Button.Transaction action='/loading' target="/mint">Pick! ✅</Button.Transaction>, 
       <Button.Reset>Reset</Button.Reset>,
     ],
   })
 })
 
-app.frame('/dbtest', async (c) => {
-  const data = await dbapi.getRandomCreatorAndArtCollection() as any
-  
+app.transaction('/mint', (c) => {
+  const { inputText } = c
+  // Send transaction response.
+  return c.send({
+    chainId: 'eip155:11155111',
+    to: '0x3B2330101212e5Ff54338f92B49C3b430CAE81d2',
+    value: parseEther(inputText as string),
+  })
+})
+
+app.frame('/loading', async (c) => {
+  const name = 'test'
   return c.res({
     title,
-    image: (
-      <Box
-      grow
-      alignHorizontal="center"
-      backgroundColor="background"
-      padding="32"
-    >
-      <VStack gap="4">
-        <Heading>FrogUI 🐸</Heading>
-        <Text color="text200" size="20">
-          {data.randomArtCollectionId}
-        </Text>
-      </VStack>
-    </Box>
-    ),
+    image: '/pokeball.gif',
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>back</Button>,
-      <Button action='/collections/0'>go collections</Button>,
-      <Button action='/verifications'>verify</Button>,
+      <Button action={`/mint/${name}`}>next</Button>,
       <Button.Reset>reset test</Button.Reset>,
     ],
   })
 })
+
+app.frame('/mint/:name', async (c) => {
+  const name = 'test'
+  return c.res({
+    title,
+    image: `/${name}.png`,
+    imageAspectRatio: '1:1',
+    intents: [
+      <Button action={`/`}>Share</Button>,
+      <Button.Reset>Play Again</Button.Reset>,
+    ],
+  })
+})
+
+// app.frame('/dbtest', async (c) => {
+//   const data = await dbapi.getRandomCreatorAndArtCollection() as any
+  
+//   return c.res({
+//     title,
+//     image: (
+//       <Box
+//       grow
+//       alignHorizontal="center"
+//       backgroundColor="background"
+//       padding="32"
+//     >
+//       <VStack gap="4">
+//         <Heading>FrogUI 🐸</Heading>
+//         <Text color="text200" size="20">
+//           {data.randomArtCollectionId}
+//         </Text>
+//       </VStack>
+//     </Box>
+//     ),
+//     imageAspectRatio: '1:1',
+//     intents: [
+//       <Button action='/'>back</Button>,
+//       <Button action='/collections/0'>go collections</Button>,
+//       <Button action='/verifications'>verify</Button>,
+//       <Button.Reset>reset test</Button.Reset>,
+//     ],
+//   })
+// })
 
 // app.route('/collections', collectionsApp);
 // app.route('/verifications', verificationsApp);
