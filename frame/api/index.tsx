@@ -59,7 +59,7 @@ app.frame('/verify', (c) => {
     imageAspectRatio: '1:1',
     intents: [
       <Button action='/'>back</Button>,
-      <Button action='/collections'>go collections</Button>,
+      <Button action='/collections/0'>go collections</Button>,
       <Button action='/dbtest'>dbtest</Button>,
       <Button.Reset>reset test</Button.Reset>,
     ],
@@ -89,6 +89,8 @@ app.frame('/dbtest', async (c) => {
     imageAspectRatio: '1:1',
     intents: [
       <Button action='/'>back</Button>,
+      <Button action='/collections/0'>go collections</Button>,
+      <Button action='/verifications'>verify</Button>,
       <Button.Reset>reset test</Button.Reset>,
     ],
   })

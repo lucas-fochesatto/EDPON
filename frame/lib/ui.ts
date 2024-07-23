@@ -4,9 +4,10 @@ export const {Box, Heading, Text, VStack, Image, vars } = createSystem({
     fonts: {
         default: [
           {
-            name: 'DotGothic16',
+            name: 'Pixelify Sans',
             source: 'google',
             weight: 400,
+            letterSpacing: '1px', 
           },
         ],
 }
