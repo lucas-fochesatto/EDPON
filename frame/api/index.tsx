@@ -1,7 +1,7 @@
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Button, Frog, TextInput } from 'frog'
-//import { neynar } from 'frog/hubs'
-// import { handle } from 'frog/vercel' 
+import { neynar } from 'frog/hubs'
+import { handle } from 'frog/vercel' 
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { getFarcasterUserInfo } from '../lib/neynar';
@@ -25,7 +25,7 @@ export const app = new Frog({
   // browserLocation: '/',
   ui: { vars },
   // Supply a Hub to enable frame verification.
-  //hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
+  hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
 
 app.use('/*', serveStatic({ root: './public' }))
@@ -192,5 +192,5 @@ serve({ fetch: app.fetch, port: Number(process.env.PORT) || 5173 });
 
 // console.log(`Server started: ${new Date()} `);
 
-// export const GET = handle(app)
-// export const POST = handle(app)
+export const GET = handle(app)
+export const POST = handle(app)
