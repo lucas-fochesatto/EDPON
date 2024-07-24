@@ -12,7 +12,8 @@
     "dotenv": "^16.4.5",
     "firebase": "^10.12.4",
     "frog": "latest",
-    "hono": "^4"
+    "hono": "^4",
+    "viem": "^2.17.11"
   },
   "devDependencies": {
     "typescript": "latest",

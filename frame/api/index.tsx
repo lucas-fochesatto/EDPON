@@ -1,18 +1,21 @@
 import { serveStatic } from '@hono/node-server/serve-static';
-import { Button, Frog, parseEther} from 'frog';
+import { Button, Frog, parseEther } from 'frog';
 import { handle } from 'frog/vercel';
-import { encodeAbiParameters } from 'viem';
+import { encodeAbiParameters, Address } from 'viem';
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
-import { getFarcasterUserInfo } from '../lib/neynar';
+import { getFarcasterUserInfo } from '../lib/neynar.js';
 import { vars } from '../lib/ui.js';
 import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
-import { zora } from 'viem/chains';
+// import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
 import  getLink from '../lib/metadata/getLink.js';
-import getUri from '../lib/contracts/getUri.js';
-import { Address } from 'viem';
+// import getUri from '../lib/contracts/getUri.js';
+// import { Address } from 'viem';
+import getUri from '../lib/zora/getUri.js';
+import getLink from '../lib/metadata/getLink.js';
+
 // *****************************************************************************************************
 // THIS IMPORT MAY BE USEFUL 
 // import { Box, Heading, Text, VStack, vars } from "../lib/ui.js"
@@ -20,9 +23,7 @@ import { Address } from 'viem';
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 // import { collectionsApp } from './collections.js'
 // import { verificationsApp } from './verification.js'
-//import { neynar } from 'frog/hubs'
 // *****************************************************************************************************
-
 
 const title = 'edpon';
 const CUSTOM_COLLECTIONS = '0x0DEA6B5c7372b3414611e70e15E474521E0fc686';
@@ -67,9 +68,6 @@ app.frame('/verify/:id', async (c) => {
     const { verifiedAddresses } = await getFarcasterUserInfo(c.frameData?.fid);
     if (!verifiedAddresses || verifiedAddresses.length === 0) {
       return c.res({
-        headers: {
-          'cache-control': 'max-age=0',
-        },
         title,
         image: '/insert-token.gif',
         imageAspectRatio: '1:1',
@@ -139,13 +137,53 @@ app.frame('/verify/:id', async (c) => {
       <Button action={`/verify/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
       <Button action={`/verify/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
       <Button.Transaction action={`/loading/${tokenId}/0`} target="/mint">Pick! ✅</Button.Transaction>, 
-      <Button.Reset>Reset</Button.Reset>,
+      <Button action='/test'>test img</Button>,
+      // <Button.Reset>Reset</Button.Reset>,
     ],
   })
 });
 
 
+app.frame('/test', async (c) => {
+  
+  let imge = {
+    src: `/test.png`, //test image
+  },testMsg = '',
+  collection = "0x0DEA6B5c7372b3414611e70e15E474521E0fc686" as `0x${string}`;
 
+  try {
+    const uri = await getUri(collection, BigInt(6));
+    const urlLink = getLink(uri);
+    // console.log(urlLink);
+    const response = await fetch(urlLink);
+    console.log(response);
+    const data = await response.json();
+    console.log(data);
+    const { image: responseImage } = data;
+    console.log(responseImage);
+    const src = getLink(responseImage);
+    console.log(src);
+    imge = {
+      src: `${src}`,
+    };
+  } catch (error) {
+    console.log(error);
+    testMsg = `Couldn't load image`;
+
+    imge = {
+      src: `/errorImg.jpeg`
+    };
+  }
+
+  return c.res({
+    title,
+    image: `${imge.src || '/test.png'}`,
+    imageAspectRatio: '1:1',
+    intents: [
+      <Button action='/'>Back 🕹️</Button>,
+    ],
+  })
+})
 
 app.transaction('/mint', async (c) => {
   const verifiedAddresses=
@@ -164,18 +202,18 @@ app.transaction('/mint', async (c) => {
    return c.contract({
      abi: zora1155Implementation,
     //  chainId: `eip155:${zora.id}`,
-     chainId: 'eip155:11155111',
-     functionName: 'mintWithRewards',
-     args: [
-       minter,
-       BigInt(tokenId), 
-       quantity,
-       minterArguments,
-       '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
-     ],
-     to: CUSTOM_COLLECTIONS,
-     value: parseEther('0.000777'),
-   })
+    chainId: 'eip155:11155111',
+    functionName: 'mintWithRewards',
+    args: [
+      minter,
+      BigInt(tokenId),
+      quantity,
+      minterArguments,
+      '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
+    ],
+    to: CUSTOM_COLLECTIONS,
+    value: parseEther('0.000777'),
+  })
 })
 
 app.frame('/loading/:tokenId/:txId/', async (c) => {
