@@ -8,6 +8,8 @@ import { getFarcasterUserInfo } from '../lib/neynar';
 import { vars } from "../lib/ui.js"
 import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
+import { zora } from 'viem/chains';
+
 
 // *****************************************************************************************************
 // THIS IMPORT MAY BE USEFUL 
@@ -157,7 +159,7 @@ app.transaction('/mint', async (c) => {
     );
    return c.contract({
      abi: zora1155Implementation,
-     chainId: 'eip155:11155111',
+     chainId: `eip155:${zora.id}`,
      functionName: 'mintWithRewards',
      args: [
        minter,
