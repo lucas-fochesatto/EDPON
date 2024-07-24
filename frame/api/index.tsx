@@ -1,7 +1,7 @@
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Button, Frog, parseEther } from 'frog';
 import { handle } from 'frog/vercel';
-import { encodeAbiParameters } from 'viem';
+import { encodeAbiParameters, Address } from 'viem';
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { getFarcasterUserInfo } from '../lib/neynar.js';
@@ -10,6 +10,9 @@ import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 // import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
+import  getLink from '../lib/metadata/getLink.js';
+// import getUri from '../lib/contracts/getUri.js';
+// import { Address } from 'viem';
 import getUri from '../lib/zora/getUri.js';
 import getLink from '../lib/metadata/getLink.js';
 
@@ -23,7 +26,7 @@ import getLink from '../lib/metadata/getLink.js';
 // *****************************************************************************************************
 
 const title = 'edpon';
-const CUSTOM_COLLECTIONS = '0xe88035cbc6703b18e2899fe2b5f6e435f00ade41';
+const CUSTOM_COLLECTIONS = '0x0DEA6B5c7372b3414611e70e15E474521E0fc686';
 const minter = '0x04E2516A2c207E84a1839755675dfd8eF6302F0a';
 const tokenId = '1'
 const quantity = 1n;
@@ -133,7 +136,7 @@ app.frame('/verify/:id', async (c) => {
     intents: [
       <Button action={`/verify/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
       <Button action={`/verify/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
-      <Button.Transaction action='/loading' target="/mint">Pick! ✅</Button.Transaction>,
+      <Button.Transaction action={`/loading/${tokenId}/0`} target="/mint">Pick! ✅</Button.Transaction>, 
       <Button action='/test'>test img</Button>,
       // <Button.Reset>Reset</Button.Reset>,
     ],
@@ -183,19 +186,21 @@ app.frame('/test', async (c) => {
 })
 
 app.transaction('/mint', async (c) => {
-  const verifiedAddresses =
-    (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0
-      ? (c.previousState as any).verifiedAddresses
-      : ((c.previousState as any).verifiedAddresses = await getFarcasterUserInfo(c.frameData?.fid));
-  const minterArguments = encodeAbiParameters(
-    [
-      { name: 'mintTo', type: 'address' },
-      { name: 'comment', type: 'string' },
-    ],
-    [verifiedAddresses[0], `Collected from Kismet Casa's Gachapon Frame`],
-  );
-  return c.contract({
-    abi: zora1155Implementation,
+  const verifiedAddresses=
+  (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0
+    ? (c.previousState as any).verifiedAddresses
+    : ( (c.previousState as any).verifiedAddresses  = await getFarcasterUserInfo(c.frameData?.fid));
+
+
+    const minterArguments = encodeAbiParameters(
+      [
+        { name: 'mintTo', type: 'address' },
+        { name: 'comment', type: 'string' },
+      ],
+      [verifiedAddresses[0], `Collected from Kismet Casa's Gachapon Frame`],
+    );
+   return c.contract({
+     abi: zora1155Implementation,
     //  chainId: `eip155:${zora.id}`,
     chainId: 'eip155:11155111',
     functionName: 'mintWithRewards',
@@ -211,52 +216,94 @@ app.transaction('/mint', async (c) => {
   })
 })
 
-app.frame('/loading', async (c) => {
-
-  if (c.transactionId === undefined) return c.error({ message: 'No txId' });
+app.frame('/loading/:tokenId/:txId/', async (c) => {
+  const prevTxId = c.req.param('txId');
+  const tokenId = c.req.param('tokenId');
+  let transactionReceipt;
+  console.log(c);
+  if (c.transactionId === undefined && prevTxId === undefined) return c.error({ message: 'No txId' });
+  if ( prevTxId !== '0' ) { 
+  c.transactionId = prevTxId as Address;
+  }
   try {
-    const transactionReceipt = await publicClient.getTransactionReceipt({
-      hash: c.transactionId,
+    transactionReceipt = await publicClient.getTransactionReceipt({
+      hash: prevTxId as Address,
     });
     if (transactionReceipt && transactionReceipt.status == 'reverted') {
       return c.error({ message: 'Transaction failed' });
     }
-  } catch (error) { }
+  } catch (error) {
+    console.log(error)
+  }
+  console.log(transactionReceipt?.status);
+  if (transactionReceipt?.status === 'success') {
+  return c.res ({
+    title,
+    image: `/test.png`,
+    imageAspectRatio: '1:1',
+    intents: [
+      <Button action={`/success/${tokenId}`}>FUUUUCK</Button>,
+      <Button.Reset>LOADING SCREEN</Button.Reset>,
+    ],
+  })
+}
+else {
+  return c.res ({
+    title,
+    image: `/test.png`,
+    imageAspectRatio: '1:1',
+    intents: [
+      <Button action={`/loading/${tokenId}/${c.transactionId}`}>Check result</Button>,
+      <Button.Reset>LOADING SCREEN</Button.Reset>,
+    ],
+  })
+}
+})
 
-  // const name = c.req.param('name')
-  // if ('1'=== name) {
-  // return c.res ({
-  //   title,
-  //   image: '/test.png',
-  //   imageAspectRatio: '1:1',
-  //   intents: [
-  //     <Button action={`/result`}>Refresh</Button>,
-  //     <Button.Reset>reset test</Button.Reset>,
-  //   ],
-  // })
-  // }
-
-  // if (1 === 1) {
-  return c.res({
+app.frame('/success/:id', async (c) => {
+  const tokenId = c.req.param('id');
+  return c.res ({
     title,
     image: `/pokeball.gif`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button action={`/result`}>Check result</Button>,
-      <Button.Reset>LOADING SCREEN</Button.Reset>,
+      <Button action={`/result/${tokenId}`}>See NFT</Button>,
+      <Button.Reset>RESET</Button.Reset>,
     ],
   })
+
+
 })
 
-app.frame('/result', (c) => {
+app.frame('/result/:id', async (c) => {
+  const tokenId = c.req.param('id');
+  let img;
+  try {
+    const uri = await getUri(CUSTOM_COLLECTIONS, BigInt(tokenId));
+    console.log(uri);
+    const uriLink = getLink(uri);
+    console.log(uriLink);
+    const response = await fetch(uriLink);
+    console.log(response);
+    const data = await response.json();
+    console.log(data);
+    const { image: responseImage } = data as any;
+    console.log(responseImage);
+    const src = getLink(responseImage);
+    img = `${src}`; 
+  } catch (error) {
+    img = '/test.png'; //test image
+    console.log(error);
+  };
+
+
   return c.res({
     title,
-    image: 'ipfs://bafkreic76eahcn2y3uhnoluavl5etndxep5clzqrtjc5tkqblh33qul3pe',
+    image: `${img}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>Back 🕹️</Button>,
+      <Button action='/'>Play again</Button>,
     ],
-
   })
 })
 
