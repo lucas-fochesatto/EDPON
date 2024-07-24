@@ -1,12 +1,13 @@
 "use client"
 
+import { ConnectButton } from "@rainbow-me/rainbowkit"
+import { useChainId, usePublicClient, useAccount, useWriteContract } from "wagmi";
+
 import createTokenAndCollection from "@/lib/createTokenAndCollection";
 import fetchTokens from "@/lib/fetchTokens";
 import firstMint from "@/lib/firstMint";
 import mint from "@/lib/mint";
 import retrieveContractAddress from "@/lib/retrieveContractAddress";
-import { ConnectButton } from "@rainbow-me/rainbowkit"
-import { useChainId, usePublicClient, useAccount, useWriteContract } from "wagmi";
 
 export default function Mint() {
     const chainId = useChainId();
