@@ -1,5 +1,5 @@
 import { Chain, createPublicClient, http } from "viem"
-import getViemNetwork from "./getViemNetwork.js"
+import getViemNetwork from "./clients/getViemNetwork.js"
 import { base } from 'viem/chains';
 
 export const publicClient = createPublicClient({

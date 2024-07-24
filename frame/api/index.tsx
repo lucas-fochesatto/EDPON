@@ -1,5 +1,5 @@
 import { serveStatic } from '@hono/node-server/serve-static';
-import { Button, Frog, parseEther} from 'frog';
+import { Button, Frog, parseEther } from 'frog';
 import { handle } from 'frog/vercel';
 import { encodeAbiParameters } from 'viem';
 import { devtools } from 'frog/dev';
@@ -10,6 +10,8 @@ import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 // import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
+import getUri from '../lib/zora/getUri.js';
+import getLink from '../lib/metadata/getLink.js';
 
 // *****************************************************************************************************
 // THIS IMPORT MAY BE USEFUL 
@@ -131,42 +133,82 @@ app.frame('/verify/:id', async (c) => {
     intents: [
       <Button action={`/verify/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
       <Button action={`/verify/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
-      <Button.Transaction action='/loading' target="/mint">Pick! ✅</Button.Transaction>, 
-      <Button.Reset>Reset</Button.Reset>,
+      <Button.Transaction action='/loading' target="/mint">Pick! ✅</Button.Transaction>,
+      <Button action='/test'>test img</Button>,
+      // <Button.Reset>Reset</Button.Reset>,
     ],
   })
 });
 
 
+app.frame('/test', async (c) => {
+  
+  let imge = {
+    src: `/test.png`, //test image
+  },testMsg = '',
+  collection = "0x0DEA6B5c7372b3414611e70e15E474521E0fc686" as `0x${string}`;
 
+  try {
+    const uri = await getUri(collection, BigInt(6));
+    const urlLink = getLink(uri);
+    // console.log(urlLink);
+    const response = await fetch(urlLink);
+    console.log(response);
+    const data = await response.json();
+    console.log(data);
+    const { image: responseImage } = data;
+    console.log(responseImage);
+    const src = getLink(responseImage);
+    console.log(src);
+    imge = {
+      src: `${src}`,
+    };
+  } catch (error) {
+    console.log(error);
+    testMsg = `Couldn't load image`;
+
+    imge = {
+      src: `/errorImg.jpeg`
+    };
+  }
+
+  return c.res({
+    title,
+    image: `${imge.src || '/test.png'}`,
+    imageAspectRatio: '1:1',
+    intents: [
+      <Button action='/'>Back 🕹️</Button>,
+    ],
+  })
+})
 
 app.transaction('/mint', async (c) => {
-  const verifiedAddresses=
-  (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0
-    ? (c.previousState as any).verifiedAddresses
-    : ( (c.previousState as any).verifiedAddresses  = await getFarcasterUserInfo(c.frameData?.fid));
-    const minterArguments = encodeAbiParameters(
-      [
-        { name: 'mintTo', type: 'address' },
-        { name: 'comment', type: 'string' },
-      ],
-      [verifiedAddresses[0], `Collected from Kismet Casa's Gachapon Frame`],
-    );
-   return c.contract({
-     abi: zora1155Implementation,
+  const verifiedAddresses =
+    (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0
+      ? (c.previousState as any).verifiedAddresses
+      : ((c.previousState as any).verifiedAddresses = await getFarcasterUserInfo(c.frameData?.fid));
+  const minterArguments = encodeAbiParameters(
+    [
+      { name: 'mintTo', type: 'address' },
+      { name: 'comment', type: 'string' },
+    ],
+    [verifiedAddresses[0], `Collected from Kismet Casa's Gachapon Frame`],
+  );
+  return c.contract({
+    abi: zora1155Implementation,
     //  chainId: `eip155:${zora.id}`,
-     chainId: 'eip155:11155111',
-     functionName: 'mintWithRewards',
-     args: [
-       minter,
-       BigInt(tokenId), 
-       quantity,
-       minterArguments,
-       '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
-     ],
-     to: CUSTOM_COLLECTIONS,
-     value: parseEther('0.000777'),
-   })
+    chainId: 'eip155:11155111',
+    functionName: 'mintWithRewards',
+    args: [
+      minter,
+      BigInt(tokenId),
+      quantity,
+      minterArguments,
+      '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
+    ],
+    to: CUSTOM_COLLECTIONS,
+    value: parseEther('0.000777'),
+  })
 })
 
 app.frame('/loading', async (c) => {
@@ -179,7 +221,7 @@ app.frame('/loading', async (c) => {
     if (transactionReceipt && transactionReceipt.status == 'reverted') {
       return c.error({ message: 'Transaction failed' });
     }
-  } catch (error) {}
+  } catch (error) { }
 
   // const name = c.req.param('name')
   // if ('1'=== name) {
@@ -193,9 +235,9 @@ app.frame('/loading', async (c) => {
   //   ],
   // })
   // }
-  
+
   // if (1 === 1) {
-  return c.res ({
+  return c.res({
     title,
     image: `/pokeball.gif`,
     imageAspectRatio: '1:1',
