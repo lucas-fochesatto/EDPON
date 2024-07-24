@@ -3,7 +3,7 @@ import { sepolia } from 'viem/chains';
 import getViemNetwork from "./clients/getViemNetwork.js"
 
 export const publicClient = createPublicClient({
-    chain: sepolia,
+    chain: sepolia, // change to zora mainnet
     transport: http(),
   });
 

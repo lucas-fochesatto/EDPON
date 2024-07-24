@@ -14,6 +14,7 @@ import { publicClient } from '../lib/contracts.js';
 // import { Address } from 'viem';
 import getUri from '../lib/zora/getUri.js';
 import getLink from '../lib/metadata/getLink.js';
+import getNextTokenId from '../lib/zora/getNextTokenId.js';
 
 // *****************************************************************************************************
 // THIS IMPORT MAY BE USEFUL 
@@ -25,11 +26,10 @@ import getLink from '../lib/metadata/getLink.js';
 // *****************************************************************************************************
 
 const title = 'edpon';
-const CUSTOM_COLLECTIONS = '0x0DEA6B5c7372b3414611e70e15E474521E0fc686';
+// const CUSTOM_COLLECTIONS = '0x0DEA6B5c7372b3414611e70e15E474521E0fc686';
 const minter = '0x04E2516A2c207E84a1839755675dfd8eF6302F0a';
-const tokenId = '1'
+// const tokenId = '1'
 const quantity = 1n;
-
 
 export const app = new Frog({
   title,
@@ -99,6 +99,10 @@ app.frame('/verify/:id', async (c) => {
   const currentCollection = collections[boundedIndex];
   const collectionName = currentCollection.collectionName;
   const artistName = currentCollection.creatorName;
+  const collectionAddress = currentCollection.ArtCollectionAddress as Address; //fix backend
+
+  const numOfNFTs = parseInt((await getNextTokenId(collectionAddress)).toString());
+  const tokenId = Math.floor(Math.random() * numOfNFTs - 1) + 1;
 
   return c.res({
     title: collectionName,
@@ -135,72 +139,37 @@ app.frame('/verify/:id', async (c) => {
     intents: [
       <Button action={`/verify/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
       <Button action={`/verify/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
-      <Button.Transaction action={`/loading/${tokenId}/0`} target="/mint">Pick! ✅</Button.Transaction>, 
-      <Button action='/test'>test img</Button>,
+      <Button.Transaction action={`/loading/${collectionAddress}/${tokenId}/0`} target={`/mint/${collectionAddress}/${tokenId}`}>MINT!</Button.Transaction>,
+      <Button action={`/result/${collectionAddress}/${tokenId}`}>test result</Button>,
+      // <Button action={`/loading/${collectionAddress}/${tokenId}/0`}>test loading</Button>,
       // <Button.Reset>Reset</Button.Reset>,
     ],
   })
 });
 
 
-app.frame('/test', async (c) => {
-  
-  let imge = {
-    src: `/test.png`, //test image
-  },collection = "0x0DEA6B5c7372b3414611e70e15E474521E0fc686" as `0x${string}`;
+app.transaction('/mint/:collection/:tokenId', async (c) => {
+  const collection = c.req.param('collection') as `0x${string}`;
+  const tokenId = c.req.param('tokenId');
 
-  try {
-    const uri = await getUri(collection, BigInt(1));
-    const urlLink = getLink(uri);
-    // console.log(urlLink);
-    const response = await fetch(urlLink);
-    console.log(response);
-    const data = await response.json();
-    console.log(data);
-    const { image: responseImage } = data;
-    console.log(responseImage);
-    const src = getLink(responseImage);
-    console.log(src);
-    imge = {
-      src: `${src}`,
-    };
-  } catch (error) {
-    console.log(error);
+  const verifiedAddresses =
+    (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0
+      ? (c.previousState as any).verifiedAddresses
+      : ((c.previousState as any).verifiedAddresses = await getFarcasterUserInfo(c.frameData?.fid));
 
-    imge = {
-      src: `/errorImg.jpeg`
-    };
-  }
 
-  return c.res({
-    title,
-    image: `${imge.src || '/test.png'}`,
-    imageAspectRatio: '1:1',
-    intents: [
-      <Button action='/'>Back 🕹️</Button>,
+  const minterArguments = encodeAbiParameters(
+    [
+      { name: 'mintTo', type: 'address' },
+      { name: 'comment', type: 'string' },
     ],
-  })
-})
-
-app.transaction('/mint', async (c) => {
-  const verifiedAddresses=
-  (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0
-    ? (c.previousState as any).verifiedAddresses
-    : ( (c.previousState as any).verifiedAddresses  = await getFarcasterUserInfo(c.frameData?.fid));
-
-
-    const minterArguments = encodeAbiParameters(
-      [
-        { name: 'mintTo', type: 'address' },
-        { name: 'comment', type: 'string' },
-      ],
-      [verifiedAddresses[0], `Collected from Kismet Casa's Gachapon Frame`],
-    );
-   return c.contract({
-     abi: zora1155Implementation,
+    [verifiedAddresses[0], `Collected from Kismet Casa's Gachapon Frame`],
+  );
+  return c.contract({
+    abi: zora1155Implementation,
     //  chainId: `eip155:${zora.id}`,
     chainId: 'eip155:11155111',
-    functionName: 'mintWithRewards',
+    functionName: 'mintWithRewards', //change to mint and add create refferal
     args: [
       minter,
       BigInt(tokenId),
@@ -208,19 +177,20 @@ app.transaction('/mint', async (c) => {
       minterArguments,
       '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
     ],
-    to: CUSTOM_COLLECTIONS,
+    to: collection,
     value: parseEther('0.000777'),
   })
 })
 
-app.frame('/loading/:tokenId/:txId/', async (c) => {
+app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
   const prevTxId = c.req.param('txId');
+  const collection = c.req.param('collection') as `0x${string}`;
   const tokenId = c.req.param('tokenId');
   let transactionReceipt;
   console.log(c);
   if (c.transactionId === undefined && prevTxId === undefined) return c.error({ message: 'No txId' });
-  if ( prevTxId !== '0' ) { 
-  c.transactionId = prevTxId as Address;
+  if (prevTxId !== '0') {
+    c.transactionId = prevTxId as Address;
   }
   try {
     transactionReceipt = await publicClient.getTransactionReceipt({
@@ -234,72 +204,74 @@ app.frame('/loading/:tokenId/:txId/', async (c) => {
   }
   console.log(transactionReceipt?.status);
   if (transactionReceipt?.status === 'success') {
-  return c.res ({
-    title,
-    image: `/test.png`,
-    imageAspectRatio: '1:1',
-    intents: [
-      <Button action={`/success/${tokenId}`}>FUUUUCK</Button>,
-      <Button.Reset>LOADING SCREEN</Button.Reset>,
-    ],
-  })
-}
-else {
-  return c.res ({
-    title,
-    image: `/test.png`,
-    imageAspectRatio: '1:1',
-    intents: [
-      <Button action={`/loading/${tokenId}/${c.transactionId}`}>Check result</Button>,
-      <Button.Reset>LOADING SCREEN</Button.Reset>,
-    ],
-  })
-}
+    return c.res({
+      title,
+      image: `/pokeball.gif`,
+      imageAspectRatio: '1:1',
+      intents: [
+        <Button action={`/result/${collection}/${tokenId}`}>OPEN CAPSULE</Button>,
+        // <Button.Reset>LOADING SCREEN</Button.Reset>,
+      ],
+    })
+  }
+  else {
+    return c.res({
+      title,
+      image: `/test.png`,
+      imageAspectRatio: '1:1',
+      intents: [
+        <Button action={`/loading/${collection}/${tokenId}/${c.transactionId}`}>REFRESH</Button>,
+        // <Button.Reset>LOADING SCREEN</Button.Reset>,
+      ],
+    })
+  }
 })
 
-app.frame('/success/:id', async (c) => {
+// app.frame('/success/:id', async (c) => {
+//   const tokenId = c.req.param('id');
+//   return c.res({
+//     title,
+//     image: `/pokeball.gif`,
+//     imageAspectRatio: '1:1',
+//     intents: [
+//       <Button action={`/result/${tokenId}`}>OPEN CAPSULE</Button>,
+//       // <Button.Reset>RESET</Button.Reset>,
+//     ],
+//   })
+// })
+
+app.frame('/result/:collection/:id', async (c) => {
+  const collection = c.req.param('collection') as `0x${string}`;
   const tokenId = c.req.param('id');
-  return c.res ({
-    title,
-    image: `/pokeball.gif`,
-    imageAspectRatio: '1:1',
-    intents: [
-      <Button action={`/result/${tokenId}`}>See NFT</Button>,
-      <Button.Reset>RESET</Button.Reset>,
-    ],
-  })
 
+  let image;
 
-})
-
-app.frame('/result/:id', async (c) => {
-  const tokenId = c.req.param('id');
-  let img;
   try {
-    const uri = await getUri(CUSTOM_COLLECTIONS, BigInt(tokenId));
-    console.log(uri);
-    const uriLink = getLink(uri);
-    console.log(uriLink);
-    const response = await fetch(uriLink);
-    console.log(response);
+    const uri = await getUri(collection, BigInt(tokenId));
+    const urlLink = getLink(uri);
+    const response = await fetch(urlLink);
     const data = await response.json();
-    console.log(data);
-    const { image: responseImage } = data as any;
-    console.log(responseImage);
+    const { image: responseImage } = data;
     const src = getLink(responseImage);
-    img = `${src}`; 
-  } catch (error) {
-    img = '/test.png'; //test image
-    console.log(error);
-  };
 
+    image = {
+      src: `${src}`,
+    };
+  } catch (error) {
+    console.log(error);
+
+    image = {
+      src: `/errorImg.jpeg`
+    };
+  }
 
   return c.res({
     title,
-    image: `${img}`,
+    image: `${image.src || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>Play again</Button>,
+      <Button action='/'>SHARE</Button>, // remember to do this
+      <Button.Reset>PLAY AGAIN</Button.Reset>,
     ],
   })
 })
