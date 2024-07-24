@@ -10,7 +10,6 @@ import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 // import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
-import  getLink from '../lib/metadata/getLink.js';
 // import getUri from '../lib/contracts/getUri.js';
 // import { Address } from 'viem';
 import getUri from '../lib/zora/getUri.js';
@@ -148,11 +147,10 @@ app.frame('/test', async (c) => {
   
   let imge = {
     src: `/test.png`, //test image
-  },testMsg = '',
-  collection = "0x0DEA6B5c7372b3414611e70e15E474521E0fc686" as `0x${string}`;
+  },collection = "0x0DEA6B5c7372b3414611e70e15E474521E0fc686" as `0x${string}`;
 
   try {
-    const uri = await getUri(collection, BigInt(6));
+    const uri = await getUri(collection, BigInt(1));
     const urlLink = getLink(uri);
     // console.log(urlLink);
     const response = await fetch(urlLink);
@@ -168,7 +166,6 @@ app.frame('/test', async (c) => {
     };
   } catch (error) {
     console.log(error);
-    testMsg = `Couldn't load image`;
 
     imge = {
       src: `/errorImg.jpeg`

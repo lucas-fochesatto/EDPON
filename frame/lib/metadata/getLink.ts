@@ -1,5 +1,5 @@
-import getArweaveLink from './getArweaveLink';
-import getIpfsLink from './getIpfsLink';
+import getArweaveLink from './getArweaveLink.js';
+import getIpfsLink from './getIpfsLink.js';
 
 const getLink = (hash: string) => {
 	if (!hash) return hash;
