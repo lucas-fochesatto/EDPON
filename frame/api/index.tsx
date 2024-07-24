@@ -4,11 +4,11 @@ import { handle } from 'frog/vercel';
 import { encodeAbiParameters } from 'viem';
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
-import { getFarcasterUserInfo } from '../lib/neynar';
+import { getFarcasterUserInfo } from '../lib/neynar.js';
 import { vars } from '../lib/ui.js';
 import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
-import { zora } from 'viem/chains';
+// import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
 
 // *****************************************************************************************************
@@ -18,9 +18,7 @@ import { publicClient } from '../lib/contracts.js';
 // import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
 // import { collectionsApp } from './collections.js'
 // import { verificationsApp } from './verification.js'
-//import { neynar } from 'frog/hubs'
 // *****************************************************************************************************
-
 
 const title = 'edpon';
 const CUSTOM_COLLECTIONS = '0xe88035cbc6703b18e2899fe2b5f6e435f00ade41';
@@ -65,9 +63,6 @@ app.frame('/verify/:id', async (c) => {
     const { verifiedAddresses } = await getFarcasterUserInfo(c.frameData?.fid);
     if (!verifiedAddresses || verifiedAddresses.length === 0) {
       return c.res({
-        headers: {
-          'cache-control': 'max-age=0',
-        },
         title,
         image: '/insert-token.gif',
         imageAspectRatio: '1:1',
