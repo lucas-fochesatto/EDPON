@@ -1,15 +1,15 @@
-import { serveStatic } from '@hono/node-server/serve-static'
-import { Button, Frog, parseEther} from 'frog'
-import { handle } from 'frog/vercel'
+import { serveStatic } from '@hono/node-server/serve-static';
+import { Button, Frog, parseEther} from 'frog';
+import { handle } from 'frog/vercel';
 import { encodeAbiParameters } from 'viem';
 import { devtools } from 'frog/dev';
 import { serve } from '@hono/node-server';
 import { getFarcasterUserInfo } from '../lib/neynar';
-import { vars } from "../lib/ui.js"
+import { vars } from '../lib/ui.js';
 import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 import { zora } from 'viem/chains';
-
+import { publicClient } from '../lib/contracts.js';
 
 // *****************************************************************************************************
 // THIS IMPORT MAY BE USEFUL 
@@ -159,7 +159,8 @@ app.transaction('/mint', async (c) => {
     );
    return c.contract({
      abi: zora1155Implementation,
-     chainId: `eip155:${zora.id}`,
+    //  chainId: `eip155:${zora.id}`,
+     chainId: 'eip155:11155111',
      functionName: 'mintWithRewards',
      args: [
        minter,
@@ -174,31 +175,53 @@ app.transaction('/mint', async (c) => {
 })
 
 app.frame('/loading', async (c) => {
-  const name = 'test'
-  return c.res({
+
+  if (c.transactionId === undefined) return c.error({ message: 'No txId' });
+  try {
+    const transactionReceipt = await publicClient.getTransactionReceipt({
+      hash: c.transactionId,
+    });
+    if (transactionReceipt && transactionReceipt.status == 'reverted') {
+      return c.error({ message: 'Transaction failed' });
+    }
+  } catch (error) {}
+
+  // const name = c.req.param('name')
+  // if ('1'=== name) {
+  // return c.res ({
+  //   title,
+  //   image: '/test.png',
+  //   imageAspectRatio: '1:1',
+  //   intents: [
+  //     <Button action={`/result`}>Refresh</Button>,
+  //     <Button.Reset>reset test</Button.Reset>,
+  //   ],
+  // })
+  // }
+  
+  // if (1 === 1) {
+  return c.res ({
     title,
-    image: '/pokeball.gif',
+    image: `/pokeball.gif`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button action={`/result/${name}`}>next</Button>,
-      <Button.Reset>reset test</Button.Reset>,
+      <Button action={`/result`}>Check result</Button>,
+      <Button.Reset>LOADING SCREEN</Button.Reset>,
     ],
   })
 })
 
-app.frame('/result/:name', async (c) => {
-  const name = c.req.param('name')
+app.frame('/result', (c) => {
   return c.res({
     title,
-    image: `/${name}.png`,
+    image: 'ipfs://bafkreic76eahcn2y3uhnoluavl5etndxep5clzqrtjc5tkqblh33qul3pe',
     imageAspectRatio: '1:1',
     intents: [
-      <Button action={`/`}>Share</Button>,
-      <Button.Reset>Play Again</Button.Reset>,
+      <Button action='/'>Back 🕹️</Button>,
     ],
+
   })
 })
-
 
 if (process.env.NODE_ENV !== 'production') {
   devtools(app, { serveStatic });
