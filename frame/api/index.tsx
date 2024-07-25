@@ -107,12 +107,17 @@ app.frame('/verify/:id', async (c) => {
           alignItems: 'center',
           justifyContent: 'center',
           // backgroundImage: "url(https://i.imgur.com/IcfnuQ0.png)",
+          backgroundImage: "url(https://i.imgur.com/uQ6whL6.gif)",
           fontSize: 60,
-          backgroundSize: "cover",
+          // backgroundSize: "cover",
           backgroundPosition: 'center',
           height: "100%",
           width: "100%",
           backgroundRepeat: 'no-repeat',
+          backgroundSize: '100% 100%',
+          // letterSpacing: -2,
+          // fontWeight: 700,
+          overflow: 'hidden',
         }}
       >
         <p style={{
@@ -172,12 +177,15 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
   const prevTxId = c.req.param('txId');
   const collection = c.req.param('collection') as `0x${string}`;
   const tokenId = c.req.param('tokenId');
+
   let transactionReceipt;
-  console.log(c);
+
   if (c.transactionId === undefined && prevTxId === undefined) return c.error({ message: 'No txId' });
+
   if (prevTxId !== '0') {
     c.transactionId = prevTxId as Address;
   }
+
   try {
     transactionReceipt = await publicClient.getTransactionReceipt({
       hash: prevTxId as Address,
@@ -202,10 +210,10 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
   else {
     return c.res({
       title,
-      image: `/test.png`,
+      image: `loading-screen${Math.floor(Math.random() * 5) + 1}.gif`,
       imageAspectRatio: '1:1',
       intents: [
-        <Button action={`/loading/${collection}/${tokenId}/${c.transactionId}`}>REFRESH</Button>,
+        <Button action={`/loading/${collection}/${tokenId}/${c.transactionId}`}>REFRESH 🔄️</Button>,
       ],
     })
   }
