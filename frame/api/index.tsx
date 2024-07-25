@@ -107,7 +107,7 @@ app.frame('/verify/:id', async (c) => {
           // backgroundImage: "url(https://i.imgur.com/wC80Bg7.jpeg)",
           backgroundImage: "url(https://i.imgur.com/E2xxGOp.jpeg)", //the best one??
           // backgroundImage: "url(https://i.imgur.com/vEZHUxh.jpeg)",
-          fontSize: 60,
+          fontSize: 70,
           // backgroundSize: "cover",
           backgroundPosition: 'center',
           height: "100%",
@@ -124,7 +124,7 @@ app.frame('/verify/:id', async (c) => {
         }}>{collectionName}</p>
         <p style={{
           color: 'white',
-          fontSize: 30,
+          fontSize: 40,
           margin: 0,
         }}
         >{artistName}</p>
@@ -133,8 +133,8 @@ app.frame('/verify/:id', async (c) => {
     imageAspectRatio: '1:1',
     intents: [
       <Button action={`/verify/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
-      <Button.Transaction action={`/loading/${collectionAddress}/${tokenId}/0`} target={`/mint/${collectionAddress}/${tokenId}`}>⚡MINT</Button.Transaction>,
       <Button action={`/verify/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
+      <Button.Transaction action={`/loading/${collectionAddress}/${tokenId}/0`} target={`/mint/${collectionAddress}/${tokenId}`}>⚡MINT</Button.Transaction>,
     ],
   })
 });
@@ -156,16 +156,20 @@ app.transaction('/mint/:collection/:tokenId', async (c) => {
     ],
     [verifiedAddresses[0], `Collected from EDPON Frame`],
   );
+
+  const rewardsRecipients = ['0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1'] as Address[];
+
   return c.contract({
     abi: zora1155Implementation,
     chainId: `eip155:${zora.id}`,
-    functionName: 'mintWithRewards', //change to mint and add create referral
+    // functionName: 'mintWithRewards', //change to mint and add create referral
+    functionName: 'mint',
     args: [
       minter,
       BigInt(tokenId),
       quantity,
+      rewardsRecipients, //refferral address
       minterArguments,
-      '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1', //refferral address
     ],
     to: collection,
     value: parseEther('0.000777'), //free mint value
