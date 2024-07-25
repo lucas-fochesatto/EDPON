@@ -5,12 +5,6 @@ import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Popup from "@/components/Popup";
 
-/* 
-  tasks para essa página:
-  
-  2. se não possuir, abrir um formulário de criação
-*/
-
 export default function Login() {
   const { address } = useAccount();
   const [isPopupOpen, setIsPopupOpen] = useState(false);

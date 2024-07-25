@@ -22,7 +22,6 @@ type ArtCollectionType = {
 }
 
 function formatBytes(a: number,b=2){if(!+a)return"0 Bytes";const c=0>b?0:b,d=Math.floor(Math.log(a)/Math.log(1024));return`${parseFloat((a/Math.pow(1024,d)).toFixed(c))} ${["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"][d]}`}
-
 /* 
     tasks que ainda faltam:
 
@@ -44,8 +43,7 @@ export default function createToken() {
     const publicClient = usePublicClient();
 
     const router = useRouter()
-    const {address: realAddress} = useAccount();
-    const address = "0x1230sdfj2358gdk"
+    const {address} = useAccount();
 
     const [collections, setCollections]  = useState<ArtCollectionType[]>([]);
     const [selectedCollection, setSelectedCollection] = useState<string>('create-new');
@@ -69,23 +67,17 @@ export default function createToken() {
     // retrieve all collections from user
     useEffect(() => {
         // if(!realAddress) router.push('/');
-        if(localStorage.getItem('collections')) {
-            setCollections(JSON.parse(localStorage.getItem('collections') || '[]'))
-            setSelectedCollection(JSON.parse(localStorage.getItem('collections') as string)[0].collectionName)
-            console.log("got it from ls")
-            return;
-        }
         fetch(`${apiUrl}/get-creator/${address}`)
             .then(res => res.json())
             .then(data => (data.creatorId))
             .then(creatorId => fetch(`${apiUrl}/get-creator-collections/${creatorId}`))
             .then(res => res.json())
             .then((data : ArtCollectionType[]) => {
+                console.log(data)
+                if(!data) return
                 localStorage.setItem('collections', JSON.stringify(data))
                 setSelectedCollection(data[0].collectionName)
                 setCollections(data)
-                
-                console.log("got it api")
             })
     }, [])
 
@@ -168,20 +160,45 @@ export default function createToken() {
     }
 
     const handleAddCollection = async () => {
-        // verify if user owns the contract
-        console.log(collectionOwnerAddress)
-        if(collectionOwnerAddress !== realAddress) {
-            alert("You don't own this contract")
-            return;
+        // verify if user is logged in
+        if(!address) {
+            router.push('/login')
         }
 
-        // fetch to backend
-        const url = 'https://cyan-accepted-kangaroo-492.mypinata.cloud/ipfs/' + collectionURI?.split('/')[2]
-        const response = await fetch(url)
-        const data = await response.json();
+        // verify if user owns the contract
+        if(collectionOwnerAddress !== address) {
+            alert("You don't own this contract")
+            return;
+        } 
 
+        // retrieve colllection info
+        const response = await fetch('https://ipfs.decentralized-content.com/ipfs/' + collectionURI?.split('/')[2])
+        const data = await response.json();
         const collectionName  = data.name;
-        const collectionCover = data.image;
+        const collectionCoverUrl = data.image;
+
+        // fetch to backend
+        const creatorId = localStorage.getItem('userId');
+
+        const fetchData = {
+            ArtCollectionAddress: alreadyForm.address,
+            creatorId,
+            creatorName: '',
+            collectionName,
+            collectionCoverUrl,
+            description: '',
+            price: 0,
+            isFree: true
+        }
+        
+        const res = await fetch(`${apiUrl}/create-art-collection`, {
+            method: 'POST',
+            body: JSON.stringify(fetchData)
+        })
+
+        if(res.ok) {
+            
+        }
     }
 
     const handleCreateCollection = async () => {
@@ -255,7 +272,7 @@ export default function createToken() {
     return (
         <>
         <Header />
-        <div className="p-8 flex flex-col items-center h-[100vh] background">
+        <div className="p-8 flex flex-col items-center h-[calc(100vh-64px-72px)] background">
             <div className="flex flex-col gap-8"> 
                 <div className="flex flex-col gap-4">
                     <h1 className="text-4xl font-bold">Gachart</h1>
@@ -297,7 +314,7 @@ export default function createToken() {
                         </div>
                     </div>
                     { selectedCollection == 'create-new' ?
-                        <div className="w-[40%] border border-stone-900 rounded-md bg-white p-4">
+                        <div className="w-[40%] border border-stone-900 rounded-md bg-[rgb(238,238,238)] p-4">
                             <h1 className="text-xl font-bold mb-4">Add collection</h1>
 
                             <div className="flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md">
@@ -360,7 +377,7 @@ export default function createToken() {
                             </div>
                         </div>
                         :
-                        <div className="w-[40%] border border-stone-900 rounded-md bg-neutral-950 p-4"> 
+                        <div className="w-[40%] border border-stone-900 rounded-md bg-[rgb(238,238,238)] p-4"> 
                             <h1 className="text-xl font-bold mb-4">Setup a new art</h1>
                             { 
                                 tokens.filter(token => token.token.contract.address === collections.find(collection => collection.collectionName === selectedCollection)?.ArtCollectionAddress).map((token, index) => (
@@ -369,7 +386,7 @@ export default function createToken() {
                                     </div>
                                 ))
                             }
-                            <div className="w-full flex flex-col items-center bg-[rgb(5,5,5)] p-4 border border-stone-900 rounded-md ">
+                            <div className="w-full flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md ">
                                 <label htmlFor="art-upload" className="w-[80%] aspect-square border-2 border-stone-900 rounded-md cursor-pointer">
                                     <div className="flex flex-col gap-4 items-center justify-center h-full">
                                         { artImagePreview ? 
@@ -393,9 +410,9 @@ export default function createToken() {
                                 <div className="w-full flex flex-col items-center gap-2 mt-4">
                                     <div className="flex flex-col gap-1 w-full">
                                         <h2 className="text-xs">Token name</h2>
-                                        <input type="text" name="tokenName" value={tokenName} placeholder="Nice name here" onChange={(e) => setTokenName(e.target.value)} className="w-full bg-[rgb(5,5,5)] text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                        <input type="text" name="tokenName" value={tokenName} placeholder="Nice name here" onChange={(e) => setTokenName(e.target.value)} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
                                     </div> 
-                                    <button onClick={handleCreateToken} className="mt-2 bg-neutral-950 rounded-md cursor-pointer px-4 py-2">Submit</button>
+                                    <button onClick={handleCreateToken} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Submit</button>
                                 </div>
                             </div>
 

@@ -30,6 +30,10 @@ export default function Popup({ onClose }: { onClose: () => void }) {
         }
 
         if(response.status == 200) {
+          const data = await response.json();
+          
+          localStorage.setItem('userId', data.creatorId)
+
           // redirect
           router.push('/createToken')
         }
@@ -40,21 +44,27 @@ export default function Popup({ onClose }: { onClose: () => void }) {
   }, [])
 
   const handleCreateAccount = async () => {
-    setLoadingCreate(true);
-
-    const response = await fetch(`${apiUrl}/create-creator`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        wallet: address,
-        name: userName
+    if(!loading) {
+      setLoadingCreate(true);
+  
+      const response = await fetch(`${apiUrl}/create-creator`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          wallet: address,
+          name: userName
+        })
       })
-    })
-
-    if(response.status == 200) {
-      router.push('/createToken')
+  
+      if(response.status == 200) {
+        const data = await response.text()
+  
+        localStorage.setItem('userId', data)
+  
+        router.push('/createToken')
+      }
     }
   }
 

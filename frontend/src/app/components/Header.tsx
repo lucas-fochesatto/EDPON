@@ -1,20 +1,22 @@
 'use client'
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 
 export default function Header() {
-return (
-<div className="p-3 bg-white flex items-center">
-    <div className="w-1/2 justify-left">
-        <a className="flex w-full ml-[5vw] text-4xl text-[black] font-bold" href='/'>EDPON</a>
-    </div>
-    <div className="w-1/2 text-[black] ml-[30vw] text-3xl">
-    </div>
-    <div className="w-1/2 justify-right">
-    <ConnectButton label='Sign In' />
-    </div>
-</div>
-)
+    const { address } = useAccount();
+    const router = useRouter();
+
+    return (
+        <div className="w-full py-4 px-12 bg-white flex items-center justify-between">
+            <a className="flex text-4xl text-[black] font-bold" href='/'>EDPON</a>
+            { address ? 
+                <ConnectButton />
+                :
+                <button onClick={() => {router.push('/login')}} className="bg-black text-white font-bold rounded-lg cursor-pointer px-4 py-2">Sign in</button>
+            }
+            
+        </div>
+    )
 }
