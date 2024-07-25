@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
-import { useAccount } from "wagmi";
 import Header from './components/Header'
 import Button from "./components/Button";
 import Popup from "@/components/Popup";
@@ -28,7 +27,7 @@ export default function Home() {
   };
 
   return (
-    <>
+    <div>
     <Header />
     <div className="flex flex-col pt-10 gap-2 ml-[5.8vw]">
       <div className="flex">
@@ -51,13 +50,12 @@ export default function Home() {
       <img src="/gachamachine.gif" width='70%'/>
       </div>
       </div>
-    /*
     <div className="h-[100vh] flex flex-col items-center justify-center gap-8">
       <h1 className="text-3xl font-bold">Make your NFTs popular by frames</h1>
       <p className="text-xl">First, login into our service</p>
       <ConnectButton label="Login" accountStatus={"address"} chainStatus={"none"} />
     </div>
-    */
-    </>
+    </div>
+    </div>
   )
 }
