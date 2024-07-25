@@ -89,7 +89,7 @@ app.frame('/verify/:id', async (c) => {
   const currentCollection = collections[boundedIndex];
   const collectionName = currentCollection.collectionName;
   const artistName = currentCollection.creatorName;
-  const collectionAddress = currentCollection.ArtCollectionAddress as Address; //fix backend
+  const collectionAddress = currentCollection.artCollectionAddress as Address;
   const numOfNFTs = parseInt((await getNextTokenId(collectionAddress)).toString());
   const tokenId = Math.floor(Math.random() * (numOfNFTs - 1)) + 1;
 
