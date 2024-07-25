@@ -1,5 +1,5 @@
 class ArtCollection {
-    constructor( artCollectionId, artCollectionAddress, collectionURI, creatorId, creatorName, collectionName, collectionCoverUrl, description, createdAt, price, isFree) {
+    constructor( artCollectionId, artCollectionAddress, collectionURI, creatorId, creatorName, collectionName, collectionCoverUrl, description, createdAt, price, isFree, createdByEDPON) {
         (this.artCollectionId = artCollectionId),
         (this.artCollectionAddress = artCollectionAddress),
         (this.collectionURI = collectionURI),
@@ -11,6 +11,7 @@ class ArtCollection {
         (this.createdAt = createdAt),
         (this.price = price);
         (this.isFree = isFree);
+        (this.createdByEDPON = createdByEDPON);
     }
 }
 

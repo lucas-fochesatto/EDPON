@@ -98,7 +98,8 @@ export const getArtCollections = async (req, res, next) => {
                     doc.data().description,
                     doc.data().createdAt,
                     doc.data().price,
-                    doc.data().isFree
+                    doc.data().isFree,
+                    doc.data().createdByEDPON
                 );
                 artCollectionArray.push(artCollection);
             });
@@ -318,7 +319,8 @@ export const getCreatorArtCollections = async (req, res, next) => {
                         doc.data().description,
                         doc.data().createdAt,
                         doc.data().price,
-                        doc.data().isFree
+                        doc.data().isFree,
+                        doc.data().createdByEDPON
                     );
                     artCollectionArray.push(artCollection);
                 }
