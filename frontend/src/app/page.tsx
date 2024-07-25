@@ -28,9 +28,10 @@ export default function Home() {
 
   return (
     <>
-      <Header />
-      <div className="flex flex-col pt-10 gap-2 ml-[5.8vw]">
-        <div className="flex">
+      <div>
+        <Header />
+        <div className="flex flex-col pt-10 gap-2 ml-[5.8vw]">
+          <div className="flex">
           <h1 className="text-3xl font-semibold">Sign In</h1> <h1 className="text-3xl ml-1.5">and</h1> 
           <h1 className="text-3xl font-semibold ml-1.5">submit</h1> 
           <h1 className="text-3xl ml-1.5">your fantastic pieces to our Gachapon!</h1>
@@ -41,23 +42,16 @@ export default function Home() {
         </div>
         <div className="flex flex-row mt-5">
           <div className="w-1/2">
-          <h1 className="text-3xl font-semibold">What's a Gachapon?</h1>
-          <p className="text-xl mt-2">Gashapon (ガシャポン), also called gachapon (ガチャポン), is a trademark of Bandai. Among the variety of vending machine-dispensed capsule toys that originated in the 1960s, it became popular in Japan and elsewhere.</p>
-          <h1 className="text-2xl font-semibold mt-5">Try it on Warpcast</h1>
-          <Button />
-          </div>
-          <div className="w-1/2 items-center justify-center">
-          <img src="/gachamachine.gif" width='70%'/>
+            <h1 className="text-3xl font-semibold">What's a Gachapon?</h1>
+            <p className="text-xl mt-2">Gashapon (ガシャポン), also called gachapon (ガチャポン), is a trademark of Bandai. Among the variety of vending machine-dispensed capsule toys that originated in the 1960s, it became popular in Japan and elsewhere.</p>
+            <h1 className="text-2xl font-semibold mt-5">Try it on Warpcast</h1>
+            <Button />
           </div>
         </div>
+        <div className="w-1/2 items-center justify-center">
+          <img src="/gachamachine.gif" width='70%'/>
+        </div>
       </div>
-      {/*
-      <div className="h-[100vh] flex flex-col items-center justify-center gap-8">
-        <h1 className="text-3xl font-bold">Make your NFTs popular by frames</h1>
-        <p className="text-xl">First, login into our service</p>
-        <ConnectButton label="Login" accountStatus={"address"} chainStatus={"none"} />
-      </div>
-      */}
     </>
   )
 }

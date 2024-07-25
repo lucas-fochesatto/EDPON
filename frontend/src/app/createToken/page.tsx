@@ -7,7 +7,7 @@ import { useAccount, useChainId, usePublicClient, useReadContract } from "wagmi"
 import { useRouter } from 'next/navigation'
 import { Circle, CircleCheck, PlusIcon, Upload } from "lucide-react";
 import fetchTokens from "@/lib/fetchTokens";
-
+import Header from '../components/Header';
 import './style.css'
 
 type ArtCollectionType = {
@@ -253,6 +253,8 @@ export default function createToken() {
     }
 
     return (
+        <>
+        <Header />
         <div className="p-8 flex flex-col items-center h-[100vh] background">
             <div className="flex flex-col gap-8"> 
                 <div className="flex flex-col gap-4">
@@ -403,5 +405,6 @@ export default function createToken() {
 
             </div>
         </div>
+        </>
     )
 }
