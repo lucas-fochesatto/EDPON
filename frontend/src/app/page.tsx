@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from "react";
+import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
-import { useAccount } from "wagmi";
+import Popup from "@/components/Popup";
 
 /* 
   tasks para essa página:
@@ -12,16 +14,23 @@ import { useAccount } from "wagmi";
 
 export default function Home() {
   const { address } = useAccount();
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+  const openPopup = () => {
+    setIsPopupOpen(true);
+  };
+
+  const closePopup = () => {
+    setIsPopupOpen(false);
+  };
 
   return (
-    <div className="flex flex-col items-center pt-10 gap-8">
-      <h1 className="text-3xl font-bold">Go to /mint to see the functions being called.</h1>
-      <ConnectButton />
+    <div className="h-[100vh] flex flex-col items-center justify-center gap-8">
+      <h1 className="text-3xl font-bold">Make your NFTs popular by frames</h1>
+      <p className="text-xl">First, login into our service</p>
 
-      {address && (
-          <Link href="/createToken">Go to create token page</Link>  
-        )
-      }
+      <ConnectButton label="Login" accountStatus={"address"} chainStatus={"none"} />
+
     </div>
   )
 }
