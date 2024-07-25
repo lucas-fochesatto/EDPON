@@ -86,9 +86,23 @@ export default function Popup({ onClose }: { onClose: () => void }) {
                     <X size={24} />
                   </div>
                   <h2 className="text-2xl font-bold">Create your account</h2>
-                  <p className="text-base">Just choose a username!</p>
+                  <p className="text-base">Do you have an Account on Zora?</p>
                 </div>
-
+              <div className="flex items-baseline mt-4 mb-6 pb-6 border-b border-slate-200">
+              <div className="space-x-2 flex text-sm">
+              <label>
+                <button className="w-9 h-9 rounded-lg flex items-center justify-center bg-black text-white">
+                  Yes
+                </button>
+              </label>
+              <label>
+                <a className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-black bg-slate-200" href="https://zora.co/invite/0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1">
+                  No
+                </a>
+              </label>
+              </div>
+              </div>
+              <p className="text-base">Pick a username</p>
                 <div className="flex flex-col gap-1 w-full">
                     <h2 className="text-xs">Wallet</h2>
                     <input type="text" name="address" value={address} contentEditable={false} disabled className="w-full cursor-not-allowed bg-[rgb(255,239,228)] text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
