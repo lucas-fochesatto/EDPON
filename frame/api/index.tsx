@@ -8,9 +8,9 @@ import { getFarcasterUserInfo } from '../lib/neynar.js';
 import { vars } from '../lib/ui.js';
 import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
-import { zora } from 'viem/chains';
+// import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
-import { SHARE_INTENT, SHARE_TEXT, SHARE_EMBEDS, FRAME_URL, ZORA_EXPLORER } from '../utils/links.js';
+import { SHARE_INTENT, SHARE_TEXT, SHARE_NFT_TEXT, SHARE_EMBEDS, FRAME_URL, ZORA_EXPLORER } from '../utils/links.js';
 import getUri from '../lib/zora/getUri.js';
 import getLink from '../lib/metadata/getLink.js';
 import getNextTokenId from '../lib/zora/getNextTokenId.js';
@@ -43,7 +43,7 @@ app.frame('/', (c) => {
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
     intents: [
-      <Button action=''>LEARN MORE</Button>,
+      <Button.Link href={`https://edpon-front.vercel.app`}>DAPP</Button.Link>,
       <Button action='/verify/0'>PLAY 🕹️</Button>,
       <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}${FRAME_URL}`}>CAST</Button.Link>,
     ],
@@ -90,7 +90,7 @@ app.frame('/verify/:id', async (c) => {
   const artistName = currentCollection.creatorName;
   const collectionAddress = currentCollection.ArtCollectionAddress as Address; //fix backend
   const numOfNFTs = parseInt((await getNextTokenId(collectionAddress)).toString());
-  const tokenId = Math.floor(Math.random() * numOfNFTs - 1) + 1;
+  const tokenId = Math.floor(Math.random() * (numOfNFTs - 1)) + 1;
 
   return c.res({
     title: collectionName,
@@ -161,7 +161,8 @@ app.transaction('/mint/:collection/:tokenId', async (c) => {
 
   return c.contract({
     abi: zora1155Implementation,
-    chainId: `eip155:${zora.id}`,
+    // chainId: `eip155:${zora.id}`,
+    chainId: `eip155:11155111`,
     // functionName: 'mintWithRewards', //change to mint and add create referral
     functionName: 'mint',
     args: [
@@ -199,21 +200,21 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
   } catch (error) {
     console.log(error)
   }
-  console.log(transactionReceipt?.status);
+
   if (transactionReceipt?.status === 'success') {
     return c.res({
       title,
       image: `/pokeball.gif`,
       imageAspectRatio: '1:1',
       intents: [
-        <Button action={`/result/${collection}/${tokenId}`}>OPEN CAPSULE</Button>,
+        <Button action={`/result/${collection}/${tokenId}/${prevTxId}`}>OPEN CAPSULE</Button>,
       ],
     })
   }
   else {
     return c.res({
       title,
-      image: `loading-screen${Math.floor(Math.random() * 5) + 1}.gif`,
+      image: `/loading-screen${Math.floor(Math.random() * 5) + 1}.gif`,
       imageAspectRatio: '1:1',
       intents: [
         <Button action={`/loading/${collection}/${tokenId}/${c.transactionId}`}>REFRESH 🔄️</Button>,
@@ -222,9 +223,10 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
   }
 })
 
-app.frame('/result/:collection/:id', async (c) => {
+app.frame('/result/:collection/:id/:txId', async (c) => {
   const collection = c.req.param('collection') as `0x${string}`;
   const tokenId = c.req.param('id');
+  const txId = c.req.param('txId');
 
   let image;
   try {
@@ -243,46 +245,28 @@ app.frame('/result/:collection/:id', async (c) => {
       src: `/errorImg.jpeg`
     };
   }
+
   return c.res({
     title,
-    image: `${image.src || '/test.png'}`,
+    image: `${image.src || '/errorImg.jpeg'}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}${FRAME_URL}/share/${collection}/${tokenId}`}>SHARE</Button.Link>,
-      <Button.Reset>PLAY AGAIN</Button.Reset>,
+      <Button.Link href={`${SHARE_INTENT}${SHARE_NFT_TEXT}${SHARE_EMBEDS}${FRAME_URL}/share/${encodeURIComponent(image.src)}`}>SHARE</Button.Link>,
+      <Button.Link href={`${ZORA_EXPLORER}/tx/${txId}`}>CHECK ETHSCAN</Button.Link>,
+      <Button.Reset>PLAY AGAIN🕹️</Button.Reset>,
     ],
   })
 })
 
-app.frame('/share/:collection/:id', async (c) => {
-  const collection = c.req.param('collection') as `0x${string}`;
-  const tokenId = c.req.param('id');
-
-  let image;
-  try {
-    const uri = await getUri(collection, BigInt(tokenId));
-    const urlLink = getLink(uri);
-    const response = await fetch(urlLink);
-    const data = await response.json();
-    const { image: responseImage } = data;
-    const src = getLink(responseImage);
-    image = {
-      src: `${src}`,
-    };
-  } catch (error) {
-    console.log(error);
-    image = {
-      src: `/errorImg.jpeg`
-    };
-  }
+app.frame('/share/:ntfImg', async (c) => {
+  const nftImg = c.req.param('nftImg');
 
   return c.res({
     title,
-    image: `${image.src || '/test.png'}`,
+    image: `${nftImg || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button.Link href={`${ZORA_EXPLORER}${collection}?tab=token_transfers`}>CHECK ETHSCAN</Button.Link>,
-      <Button.Reset>PLAY</Button.Reset>,
+      <Button.Reset>TRY IT OUT!! 🕹️</Button.Reset>,
     ],
   })
 })
