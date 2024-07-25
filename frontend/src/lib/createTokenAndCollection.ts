@@ -28,6 +28,8 @@ export default async function createTokenAndCollection({ address, chainId, publi
         token
     });
 
+    console.log(collectionAddress)
+
     const walletClient = createWalletClient({
         chain: zora,
         transport: custom(window.ethereum!)

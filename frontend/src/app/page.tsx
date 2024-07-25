@@ -5,12 +5,6 @@ import Link from "next/link";
 import Header from './components/Header'
 import Button from "./components/Button";
 
-/* 
-  tasks para essa página:
-  1. verificar se o creator já possui conta na nossa plataforma
-  2. se não possuir, abrir um formulário de criação
-*/
-
 export default function Home() {
   const { address } = useAccount();
 

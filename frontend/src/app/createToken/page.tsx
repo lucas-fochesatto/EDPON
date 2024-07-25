@@ -3,14 +3,17 @@
 import { zoraCreator1155ImplABI } from "@zoralabs/protocol-deployments"
 
 import { useEffect, useState } from "react";
-import { useAccount, useChainId, usePublicClient, useReadContract } from "wagmi";
+import { useAccount, useBalance, useChainId, usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { useRouter } from 'next/navigation'
 import { Circle, CircleCheck, PlusIcon, Upload } from "lucide-react";
 import Header from '../components/Header';
 import './style.css'
 import { makeContractMetadata, makeImageTokenMetadata } from "@/lib/metadata";
-import retrieveContractAddress from "@/lib/retrieveContractAddress";
 import createTokenAndCollection from "@/lib/createTokenAndCollection";
+import Loading from "@/components/Loading";
+import firstMint from "@/lib/firstMint";
+import { parseEther } from "viem";
+import Fetching from "@/components/Fetching";
 
 type ArtCollectionType = {
     artCollectionId: string,
@@ -41,18 +44,21 @@ export default function CreateToken() {
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     const router = useRouter();
-    const {address} = useAccount();
+    const { address } = useAccount();
     const chainId = useChainId();
     const publicClient = usePublicClient();
+    const { writeContract } = useWriteContract();
 
     const [collections, setCollections]  = useState<ArtCollectionType[]>([]);
-    const [selectedCollection, setSelectedCollection] = useState<string>('create-new');
+    const [selectedCollectionIndex, setSelectedCollectionIndex] = useState(0);
     const [already, setAlready] = useState<number>(0);
     const [file, setFile] = useState<File>();
     const [artFile, setArtFile] = useState<File>();
     const [imagePreview, setImagePreview] = useState<any>();
     const [artImagePreview, setArtImagePreview] = useState<any>();
     const [tokenName, setTokenName] = useState("");
+    const [loadingCreate, setLoadingCreate] = useState(false);
+    const [loadingCollections, setLoadingCollections] = useState(true);
     
     const [alreadyForm, setAlreadyForm] = useState({
         address: "",
@@ -72,10 +78,13 @@ export default function CreateToken() {
             .then(creatorId => fetch(`${apiUrl}/get-creator-collections/${creatorId}`))
             .then(res => res.json())
             .then((data : ArtCollectionType[]) => {
-                if(data.length == 0) return
-                localStorage.setItem('collections', JSON.stringify(data))
-                setSelectedCollection(data[0].collectionName)
+                if(data.length == 0) {
+                    setLoadingCollections(false)
+                    return
+                }
                 setCollections(data)
+                setLoadingCollections(false)
+                console.log(data)
             })
     }, [address])
 
@@ -92,9 +101,13 @@ export default function CreateToken() {
         functionName: "contractURI",
     })
 
+    const balance = useBalance({
+        address,
+    })
+
     // handle option change
     const handleSelectedCollection = (e : any) => {
-        setSelectedCollection(e.target.value)
+        setSelectedCollectionIndex(e.target.value)
     }
 
     const handleAlreadyFormChange = (e : any) => {
@@ -120,6 +133,10 @@ export default function CreateToken() {
 
         // generate imagePreview
         if (file) {
+          if(file.size > 5 * 1048576) {
+            alert("Big file!")
+            return
+          }
           setFile(file);
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -134,13 +151,17 @@ export default function CreateToken() {
 
         // generate imagePreview
         if (artFile) {
-            setArtFile(artFile);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setArtImagePreview(reader.result);
-            };
-            reader.readAsDataURL(artFile);
+          if(artFile.size > 5 * 1048576) {
+            alert("Big file!")
+            return
           }
+          setArtFile(artFile);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setArtImagePreview(reader.result);
+          };
+          reader.readAsDataURL(artFile);
+        }
     }
 
     const handleAddCollection = async () => {
@@ -187,11 +208,13 @@ export default function CreateToken() {
         })
 
         if(res.ok) {
-            router.refresh()
+            window.location.reload()
         }
     }
 
     const handleCreateCollection = async () => {
+        if(loadingCreate) return
+
         if(!notAlreadyForm.collectionName) {
             alert("Please fill in collection name")
             return
@@ -202,6 +225,7 @@ export default function CreateToken() {
             return
         }
 
+        setLoadingCreate(true)
         const { contractMetadataJsonUri, imageFileIpfsUrl } = await makeContractMetadata({
             imageFile: file,
             name: notAlreadyForm.collectionName,
@@ -233,7 +257,8 @@ export default function CreateToken() {
         })
 
         if(res.ok) {
-            router.refresh()
+            alert("Collection created successfully on EDPON. You'll need to setup a token to see the collection on-chain")
+            window.location.reload()
         }
     }
 
@@ -248,17 +273,30 @@ export default function CreateToken() {
             return
         }
 
+        if(!balance.isSuccess) return
+
+        if(balance.data.value < parseEther("0.000777")) {
+            alert("You need at least 0.000777 ETH. You will receive some back. Check at zora.co after minting")
+            return
+        }
+
         // retrieve collection info
-        const collection = collections.find(collection => collection.collectionName == selectedCollection)
+        const collection = collections[selectedCollectionIndex]
 
         const tokenMetadataJsonUri = await makeImageTokenMetadata({
             imageFile: artFile,
             tokenName 
         })
 
-        console.log(tokenMetadataJsonUri)
+        const mintReferral = process.env.NEXT_PUBLIC_MINT_REFERRAL as `0x${string}`
 
-        const { collectionAddress, premintConfig } = await createTokenAndCollection({
+        console.log({
+            contractAdmin: address!,
+            contractName: collection?.collectionName!,
+            contractURI: collection?.collectionURI!
+        })
+
+        const { collectionAddress } = await createTokenAndCollection({
             chainId,
             publicClient,
             address: address!,
@@ -269,10 +307,14 @@ export default function CreateToken() {
             },
             token: {
                 payoutRecipient: address!,
-                createReferral: '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
+                createReferral: mintReferral,
                 tokenURI: tokenMetadataJsonUri
             }
         })
+
+        const parameters = await firstMint({ address: address!, mintReferral, collectionAddress, chainId, publicClient });
+
+        writeContract(parameters)
     }
 
     return (
@@ -286,147 +328,154 @@ export default function CreateToken() {
                 </div>
 
                 <div className="flex w-[70vw] h-[65vh] justify-between">
-                    <div className="w-[50%] border-2 border-stone-900 rounded-md bg-white p-4">
-                        <h1 className="text-xl font-bold mb-4">Your collections on Zora</h1>
-                        <div className="bg-gray-100 border border-stone-900 rounded-md">
-                            {collections.map((collection, index) => (
-                                <div key={index} className={`flex items-center px-4 py-2 gap-4 cursor-pointer border-b border-stone-900 w-full`} onClick={() => setSelectedCollection(collection.collectionName)}>
-                                    <input type="radio" id={`collection-${index}`} name="collection" value={collection.collectionName} onChange={handleSelectedCollection} checked={selectedCollection === collection.collectionName} hidden />
-                                    <label htmlFor={`collection-${index}`} className="w-full flex items-center justify-between cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                            <img 
-                                                src = {
-                                                    collection.createdByEDPON ?
-                                                    `${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${collection.collectionCoverUrl.split('/')[2]}` 
-                                                    :
-                                                    `https://ipfs.decentralized-content.com/ipfs/${collection.collectionCoverUrl.split('/')[2]}`
-                                                }
-                                                alt="collection cover" className="w-[20px] h-[20px] object-cover rounded-md"
-                                            />
-                                            <h3 className="text-base">{collection.collectionName}</h3>
-                                        </div>
-                                        {
-                                            selectedCollection === collection.collectionName ? 
-                                            <CircleCheck size={16}/> : <Circle size={16}/>
-                                        }
+                    {
+                        loadingCollections ? <Fetching width="w-[50%]"/> :
+                        <div className={`w-[50%] border-2 border-stone-900 rounded-md bg-white p-4`}>
+                            <h1 className="text-xl font-bold mb-4">Your collections on EDPON</h1>
+                            <div className="bg-gray-100 border border-stone-900 rounded-md">
+                                {collections.map((collection, index) => (
+                                    <div key={index} className={`flex items-center px-4 py-2 gap-4 cursor-pointer border-b border-stone-900 w-full`} onClick={() => setSelectedCollectionIndex(index)}>
+                                        <input type="radio" id={`collection-${index}`} name="collection" value={index} onChange={handleSelectedCollection} checked={selectedCollectionIndex === index} hidden />
+                                        <label htmlFor={`collection-${index}`} className="w-full flex items-center justify-between cursor-pointer">
+                                            <div className="flex items-center gap-2">
+                                                <img 
+                                                    src = {
+                                                        collection.createdByEDPON ?
+                                                        `${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${collection.collectionCoverUrl.split('/')[2]}` 
+                                                        :
+                                                        `https://ipfs.decentralized-content.com/ipfs/${collection.collectionCoverUrl.split('/')[2]}`
+                                                    }
+                                                    alt="collection cover" className="w-[20px] h-[20px] object-cover rounded-md"
+                                                />
+                                                <h3 className="text-base">{collection.collectionName}</h3>
+                                            </div>
+                                            {
+                                                selectedCollectionIndex === index ? 
+                                                <CircleCheck size={16}/> : <Circle size={16}/>
+                                            }
+                                        </label>
+                                    </div> 
+                                ))}
+                                <div className={`flex items-center px-4 py-2 gap-4 cursor-pointer w-full`} onClick={() => setSelectedCollectionIndex(collections.length)}>
+                                    <input type="radio" id="create-new-collection" name="collection" value={collections.length} onChange={handleSelectedCollection} checked={selectedCollectionIndex === collections.length} hidden />
+                                    <label htmlFor="create-new-collection" className="w-full flex items-center justify-between cursor-pointer">
+                                            <div className="flex items-center gap-2">
+                                                <PlusIcon size={20} />
+                                                <h3 className="text-base">Add new collection</h3>
+                                            </div>
+                                            {
+                                                selectedCollectionIndex === collections.length ? 
+                                                <CircleCheck size={16}/> : <Circle size={16}/>
+                                            }
                                     </label>
-                                </div> 
-                            ))}
-                            <div className={`flex items-center px-4 py-2 gap-4 cursor-pointer w-full`} onClick={() => setSelectedCollection('create-new')}>
-                                <input type="radio" id="create-new-collection" name="collection" value="create-new" onChange={handleSelectedCollection} checked={selectedCollection === 'create-new'} hidden />
-                                <label htmlFor="create-new-collection" className="w-full flex items-center justify-between cursor-pointer">
-                                        <div className="flex items-center gap-2">
-                                            <PlusIcon size={20} />
-                                            <h3 className="text-base">Add new collection</h3>
-                                        </div>
-                                        {
-                                            selectedCollection === 'create-new' ? 
-                                            <CircleCheck size={16}/> : <Circle size={16}/>
-                                        }
-                                </label>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    { selectedCollection == 'create-new' ?
-                        <div className="w-[40%] border border-stone-900 rounded-md bg-[rgb(238,238,238)] p-4">
-                            <h1 className="text-xl font-bold mb-4">Add collection</h1>
-
-                            <div className="flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md">
-                                <h2 className="text-base">Is your collection already on zora network?</h2>
-
-                                <div className="flex w-full justify-center items-center gap-10">
-                                    <div className="flex items-center gap-2">
-                                        <label htmlFor="no">No</label>
-                                        <input type="radio" id="no" name="already" value={0} onChange={() => setAlready(0)} checked={already == 0} />
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <label htmlFor="yes">Yes</label>
-                                        <input type="radio" id="yes" name="already" value={1} onChange={() => setAlready(1)} checked={already == 1} />
-                                    </div>
-                                </div>
-
-                                { already == 1 ? 
-                                    <div className="w-full flex flex-col items-center gap-2 mt-4">
-                                        <div className="flex flex-col gap-1 w-full">
-                                            <h2 className="text-xs">Collection address</h2>
-                                            <input type="text" name="address" value={alreadyForm.address} placeholder="0x1230sdfj2358gdk" onChange={handleAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
-                                        </div> 
-                                        <button onClick={handleAddCollection} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
-                                    </div>
-                                    :
-                                    <div className="w-full flex flex-col items-center gap-2 mt-4">
-                                        <div className="flex flex-col gap-1 w-full">
-                                            <h2 className="text-xs">Collection name</h2>
-                                            <input type="text" name="collectionName" value={notAlreadyForm.collectionName} placeholder="Enter a cool name" onChange={handleNotAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
-                                        </div> 
-                                        <div className="flex flex-col gap-1 w-full">
-                                            <h2 className="text-xs">Description</h2>
-                                            <textarea name="description" value={notAlreadyForm.description} placeholder="Enter description" onChange={handleNotAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                    }
+                    {
+                        loadingCollections ? <Fetching width="w-[40%]"/> : 
+                        <div className="w-[40%] border border-stone-900 rounded-md bg-[rgb(238,238,238)] p-4"> 
+                        { selectedCollectionIndex === collections.length ?
+                            <>
+                                <h1 className="text-xl font-bold mb-4">Add collection</h1>
+    
+                                <div className="flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md">
+                                    <h2 className="text-base">Is your collection already on zora network?</h2>
+    
+                                    <div className="flex w-full justify-center items-center gap-10">
+                                        <div className="flex items-center gap-2">
+                                            <label htmlFor="no">No</label>
+                                            <input type="radio" id="no" name="already" value={0} onChange={() => setAlready(0)} checked={already == 0} />
                                         </div>
-                                        <div className="flex flex-col gap-1 w-full">
-                                            <h2 className="text-xs">Collection cover</h2>
-                                            <label htmlFor="file-upload" className="cursor-pointer py-4 px-4 flex items-center gap-4 bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full">
-                                                { imagePreview ?
+                                        <div className="flex items-center gap-2">
+                                            <label htmlFor="yes">Yes</label>
+                                            <input type="radio" id="yes" name="already" value={1} onChange={() => setAlready(1)} checked={already == 1} />
+                                        </div>
+                                    </div>
+    
+                                    { already == 1 ? 
+                                        <div className="w-full flex flex-col items-center gap-2 mt-4">
+                                            <div className="flex flex-col gap-1 w-full">
+                                                <h2 className="text-xs">Collection address</h2>
+                                                <input type="text" name="address" value={alreadyForm.address} placeholder="0x1230sdfj2358gdk" onChange={handleAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                            </div> 
+                                            <button onClick={handleAddCollection} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
+                                        </div>
+                                        :
+                                        <div className="w-full flex flex-col items-center gap-2 mt-4">
+                                            <div className="flex flex-col gap-1 w-full">
+                                                <h2 className="text-xs">Collection name</h2>
+                                                <input type="text" name="collectionName" value={notAlreadyForm.collectionName} placeholder="Enter a cool name" onChange={handleNotAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                            </div> 
+                                            <div className="flex flex-col gap-1 w-full">
+                                                <h2 className="text-xs">Description</h2>
+                                                <textarea name="description" value={notAlreadyForm.description} placeholder="Enter description" onChange={handleNotAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                            </div>
+                                            <div className="flex flex-col gap-1 w-full">
+                                                <h2 className="text-xs">Collection cover</h2>
+                                                <label htmlFor="file-upload" className="cursor-pointer py-4 px-4 flex items-center gap-4 bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full">
+                                                    { imagePreview ?
+                                                    <>
+                                                    <img src={imagePreview} alt="img" width={28} height={28}/>
+                                                    <div>
+                                                        <p className="text-sm font-bold">{file?.name}</p>
+                                                        <p className="text-xs">{formatBytes(file?.size!)}</p>
+                                                    </div>
+                                                    </> :
+                                                    <>
+                                                    <Upload size={28}/>
+                                                    <div>
+                                                        <p className="text-sm font-bold">Select a file</p>
+                                                        <p className="text-xs">PNG, JPEG and GIF supported. Max size 5MB.</p>
+                                                    </div>
+                                                    </>
+                                                    }  
+                                                </label>
+                                                <input type="file" accept=".png, .jpg, .jpeg, .gif" id="file-upload" onChange={handleCoverChange} hidden />
+                                            </div>
+                                            
+                                            <button onClick={handleCreateCollection} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">
+                                                { loadingCreate ? <Loading color="white" /> : "Create collection" }
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </>
+                            :
+                            <>
+                                <h1 className="text-xl font-bold mb-4">Setup a new art</h1>
+                                <div className="w-full flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md ">
+                                    <label htmlFor="art-upload" className="w-[80%] aspect-square border-2 border-stone-900 rounded-md cursor-pointer">
+                                        <div className="flex flex-col gap-4 items-center justify-center h-full">
+                                            { artImagePreview ? 
+                                                <img src={artImagePreview} alt="image" className="aspect-square object-cover w-full h-full"/>
+                                                :
                                                 <>
-                                                <img src={imagePreview} alt="img" width={28} height={28}/>
-                                                <div>
-                                                    <p className="text-sm font-bold">{file?.name}</p>
-                                                    <p className="text-xs">{formatBytes(file?.size!)}</p>
-                                                </div>
-                                                </> :
-                                                <>
-                                                <Upload size={28}/>
-                                                <div>
+                                                <div className="text-center">
                                                     <p className="text-sm font-bold">Select a file</p>
                                                     <p className="text-xs">PNG, JPEG and GIF supported. Max size 5MB.</p>
                                                 </div>
+                                                <Upload size={32} />
                                                 </>
-                                                }  
-                                            </label>
-                                            <input type="file" id="file-upload" onChange={handleCoverChange} hidden />
+                                            }
+                                            
                                         </div>
-                                        <button onClick={handleCreateCollection} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
+                                    </label>
+                                    <input type="file" accept=".png, .jpg, .jpeg, .gif" id="art-upload" onChange={handleArtChange} hidden />
+    
+                                    <div className="w-full flex flex-col items-center gap-2 mt-4">
+                                        <div className="flex flex-col gap-1 w-full">
+                                            <h2 className="text-xs">Token name</h2>
+                                            <input type="text" name="tokenName" value={tokenName} placeholder="Nice name here" onChange={(e) => setTokenName(e.target.value)} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                        </div> 
+                                        <button onClick={handleCreateToken} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Submit</button>
                                     </div>
-                                }
-                            </div>
-                        </div>
-                        :
-                        <div className="w-[40%] border border-stone-900 rounded-md bg-[rgb(238,238,238)] p-4"> 
-                            <h1 className="text-xl font-bold mb-4">Setup a new art</h1>
-                            <div className="w-full flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md ">
-                                <label htmlFor="art-upload" className="w-[80%] aspect-square border-2 border-stone-900 rounded-md cursor-pointer">
-                                    <div className="flex flex-col gap-4 items-center justify-center h-full">
-                                        { artImagePreview ? 
-                                            <>
-                                            <img src={artImagePreview} alt="image" className="object-cover w-full h-full"/>
-                                            </>
-                                            :
-                                            <>
-                                            <div className="text-center">
-                                                <p className="text-sm font-bold">Select a file</p>
-                                                <p className="text-xs">PNG, JPEG and GIF supported. Max size 5MB.</p>
-                                            </div>
-                                            <Upload size={32} />
-                                            </>
-                                        }
-                                        
-                                    </div>
-                                </label>
-                                <input type="file" id="art-upload" onChange={handleArtChange} hidden />
-
-                                <div className="w-full flex flex-col items-center gap-2 mt-4">
-                                    <div className="flex flex-col gap-1 w-full">
-                                        <h2 className="text-xs">Token name</h2>
-                                        <input type="text" name="tokenName" value={tokenName} placeholder="Nice name here" onChange={(e) => setTokenName(e.target.value)} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
-                                    </div> 
-                                    <button onClick={handleCreateToken} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Submit</button>
                                 </div>
-                            </div>
-
+                            </>
+                        }
                         </div>
                     }
                 </div> 
-
             </div>
         </div>
         </>
