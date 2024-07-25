@@ -30,7 +30,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col gap-8">
             {address && (
-                <Link className='text-white bg-black text-3xl p-3 font-bold w-full rounded-xl flex justify-center items-center hover:bg-[blue]' href="/createToken">SUBMIT COLLECTION! 🎆</Link>  
+                <Link className='text-white bg-black text-3xl p-3 font-bold w-full rounded-xl flex justify-center items-center hover:bg-slate-700' href="/createToken">SUBMIT COLLECTION! 🎆</Link>  
               )
             }
             <div className="w-full">

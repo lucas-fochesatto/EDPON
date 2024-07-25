@@ -26,8 +26,8 @@ export default function Login() {
 
   return (
     <div className="h-[100vh] flex flex-col items-center justify-center gap-8">
-      <h1 className="text-3xl font-bold">Make your NFTs popular by frames</h1>
-      <p className="text-xl">First, login into our service</p>
+      <h1 className="text-3xl font-bold">We almost got your collection</h1>
+      <p className="text-xl">You just have to login!</p>
 
       <ConnectButton label="Login" accountStatus={"address"} chainStatus={"none"} />
 
