@@ -7,7 +7,7 @@ import { useAccount, useChainId, usePublicClient, useReadContract } from "wagmi"
 import { useRouter } from 'next/navigation'
 import { Circle, CircleCheck, PlusIcon, Upload } from "lucide-react";
 import fetchTokens from "@/lib/fetchTokens";
-
+import Header from '../components/Header';
 import './style.css'
 
 type ArtCollectionType = {
@@ -253,6 +253,8 @@ export default function createToken() {
     }
 
     return (
+        <>
+        <Header />
         <div className="p-8 flex flex-col items-center h-[100vh] background">
             <div className="flex flex-col gap-8"> 
                 <div className="flex flex-col gap-4">
@@ -320,7 +322,6 @@ export default function createToken() {
                                         </div>
                                         <div className="flex flex-col gap-1 w-full">
                                             <h2 className="text-xs">Description</h2>
-                                            <textarea name="description" value={alreadyForm.description} placeholder="Enter description" onChange={handleAlreadyFormChange} className="w-full bg-[gray-100] text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
                                         </div>
                                         <button onClick={handleAddCollection} className="mt-2 bg-[black] text-[white] font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
                                     </div>
@@ -407,5 +408,6 @@ export default function createToken() {
 
             </div>
         </div>
+        </>
     )
 }
