@@ -13,7 +13,6 @@ type createTokenAndCollectionArgs = {
     }
     token: {
         tokenURI: string;
-        maxSupply: bigint;
         payoutRecipient: `0x${string}`;
         createReferral: `0x${string}`;
     },

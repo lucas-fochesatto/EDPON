@@ -10,6 +10,7 @@ import Header from '../components/Header';
 import './style.css'
 import { makeContractMetadata, makeImageTokenMetadata } from "@/lib/metadata";
 import retrieveContractAddress from "@/lib/retrieveContractAddress";
+import createTokenAndCollection from "@/lib/createTokenAndCollection";
 
 type ArtCollectionType = {
     artCollectionId: string,
@@ -36,11 +37,13 @@ function formatBytes(a: number,b=2){if(!+a)return"0 Bytes";const c=0>b?0:b,d=Mat
     Brasil :)
 */
 
-export default function createToken() {
+export default function CreateToken() {
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    const router = useRouter()
+    const router = useRouter();
     const {address} = useAccount();
+    const chainId = useChainId();
+    const publicClient = usePublicClient();
 
     const [collections, setCollections]  = useState<ArtCollectionType[]>([]);
     const [selectedCollection, setSelectedCollection] = useState<string>('create-new');
@@ -245,12 +248,31 @@ export default function createToken() {
             return
         }
 
+        // retrieve collection info
+        const collection = collections.find(collection => collection.collectionName == selectedCollection)
+
         const tokenMetadataJsonUri = await makeImageTokenMetadata({
             imageFile: artFile,
             tokenName 
         })
 
         console.log(tokenMetadataJsonUri)
+
+        const { collectionAddress, premintConfig } = await createTokenAndCollection({
+            chainId,
+            publicClient,
+            address: address!,
+            contract: {
+                contractAdmin: address!,
+                contractName: collection?.collectionName!,
+                contractURI: collection?.collectionURI!
+            },
+            token: {
+                payoutRecipient: address!,
+                createReferral: '0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1',
+                tokenURI: tokenMetadataJsonUri
+            }
+        })
     }
 
     return (
