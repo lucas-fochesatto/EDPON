@@ -25,7 +25,7 @@ export default async function mint({ chainId, publicClient, collectionAddress, t
         // optional address that will receive a mint referral reward
         mintReferral,
         // the address to mint the token to
-        minterAccount,
+        minterAccount
     });
 
     return parameters; // use writeContract(parameters) on frontend
