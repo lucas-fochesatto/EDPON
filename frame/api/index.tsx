@@ -107,7 +107,9 @@ app.frame('/verify/:id', async (c) => {
           alignItems: 'center',
           justifyContent: 'center',
           // backgroundImage: "url(https://i.imgur.com/IcfnuQ0.png)",
-          backgroundImage: "url(https://i.imgur.com/uQ6whL6.gif)",
+          // backgroundImage: "url(https://i.imgur.com/wC80Bg7.jpeg)",
+          backgroundImage: "url(https://i.imgur.com/E2xxGOp.jpeg)", //the best one??
+          // backgroundImage: "url(https://i.imgur.com/vEZHUxh.jpeg)",
           fontSize: 60,
           // backgroundSize: "cover",
           backgroundPosition: 'center',
