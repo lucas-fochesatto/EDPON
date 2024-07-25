@@ -58,7 +58,7 @@ app.frame('/', (c) => {
     intents: [
       <Button action=''>LEARN MORE</Button>,
       <Button action='/verify/0'>PLAY 🕹️</Button>,
-      <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}/api/share/`}>CAST</Button.Link>,
+      <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}https://edpon-frames.vercel.app/api/`}>CAST</Button.Link>,
     ],
 
   })
@@ -253,7 +253,7 @@ app.frame('/result/:collection/:id', async (c) => {
     image: `${image.src || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
-        <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}/api/share/`}>CAST</Button.Link>, 
+        <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}/https://edpon-frames.vercel.app/api/result/collection/tokenId`}>CAST</Button.Link>, 
         <Button.Reset>PLAY AGAIN</Button.Reset>,
     ],
   })
