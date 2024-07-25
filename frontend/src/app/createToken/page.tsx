@@ -263,7 +263,7 @@ export default function createToken() {
                 </div>
 
                 <div className="flex w-[70vw] h-[65vh] justify-between">
-                    <div className="w-[50%] border-2 border-stone-900 rounded-md bg-[white] p-4">
+                    <div className="w-[50%] border-2 border-stone-900 rounded-md bg-white p-4">
                         <h1 className="text-xl font-bold mb-4">Your collections on Zora</h1>
                         <div className="bg-gray-100 border border-stone-900 rounded-md">
                             {collections.map((collection, index) => (
@@ -297,10 +297,10 @@ export default function createToken() {
                         </div>
                     </div>
                     { selectedCollection == 'create-new' ?
-                        <div className="w-[40%] border border-stone-900 rounded-md bg-[white] p-4">
+                        <div className="w-[40%] border border-stone-900 rounded-md bg-white p-4">
                             <h1 className="text-xl font-bold mb-4">Add collection</h1>
 
-                            <div className="flex flex-col items-center bg-[white] p-4 border border-stone-900 rounded-md">
+                            <div className="flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md">
                                 <h2 className="text-base">Is your collection already on zora network?</h2>
 
                                 <div className="flex w-full justify-center items-center gap-10">
@@ -318,26 +318,23 @@ export default function createToken() {
                                     <div className="w-full flex flex-col items-center gap-2 mt-4">
                                         <div className="flex flex-col gap-1 w-full">
                                             <h2 className="text-xs">Collection address</h2>
-                                            <input type="text" name="address" value={alreadyForm.address} placeholder="0x1230sdfj2358gdk" onChange={handleAlreadyFormChange} className="w-full bg-[rgb(gray-100)] text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
-                                        </div>
-                                        <div className="flex flex-col gap-1 w-full">
-                                            <h2 className="text-xs">Description</h2>
-                                        </div>
-                                        <button onClick={handleAddCollection} className="mt-2 bg-[black] text-[white] font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
+                                            <input type="text" name="address" value={alreadyForm.address} placeholder="0x1230sdfj2358gdk" onChange={handleAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                        </div> 
+                                        <button onClick={handleAddCollection} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
                                     </div>
                                     :
                                     <div className="w-full flex flex-col items-center gap-2 mt-4">
                                         <div className="flex flex-col gap-1 w-full">
                                             <h2 className="text-xs">Collection name</h2>
-                                            <input type="text" name="collectionName" value={notAlreadyForm.collectionName} placeholder="Enter a cool name" onChange={handleNotAlreadyFormChange} className="w-full bg-[gray-100] text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                            <input type="text" name="collectionName" value={notAlreadyForm.collectionName} placeholder="Enter a cool name" onChange={handleNotAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
                                         </div> 
                                         <div className="flex flex-col gap-1 w-full">
                                             <h2 className="text-xs">Description</h2>
-                                            <textarea name="description" value={notAlreadyForm.description} placeholder="Enter description" onChange={handleNotAlreadyFormChange} className="w-full bg-[gray-100] text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                            <textarea name="description" value={notAlreadyForm.description} placeholder="Enter description" onChange={handleNotAlreadyFormChange} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
                                         </div>
                                         <div className="flex flex-col gap-1 w-full">
                                             <h2 className="text-xs">Collection cover</h2>
-                                            <label htmlFor="file-upload" className="cursor-pointer py-4 px-4 flex items-center gap-4 bg-[gray-100] text-base px-2 py-1 border border-stone-900 rounded-md w-full">
+                                            <label htmlFor="file-upload" className="cursor-pointer py-4 px-4 flex items-center gap-4 bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full">
                                                 { imagePreview ?
                                                 <>
                                                 <img src={imagePreview} alt="img" width={28} height={28}/>
@@ -357,7 +354,7 @@ export default function createToken() {
                                             </label>
                                             <input type="file" id="file-upload" onChange={handleCoverChange} hidden />
                                         </div>
-                                        <button onClick={handleCreateCollection} className="mt-2 bg-[black] text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
+                                        <button onClick={handleCreateCollection} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
                                     </div>
                                 }
                             </div>
