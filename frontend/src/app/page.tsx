@@ -22,7 +22,7 @@ export default function Home() {
           <div className="w-1/2">
             <p className="text-3xl"><strong>Sign in</strong> and <strong>submit</strong> your fantastic pieces to our Gachapon! </p>
             <div className="mt-4">
-              <h1 className="text-3xl font-semibold">What's a Gachapon?</h1>
+              <h1 className="text-3xl font-semibold">What&apos;s a Gachapon?</h1>
               <p className="text-xl mt-2">Gashapon (ガシャポン), also called gachapon (ガチャポン), is a trademark of Bandai. Among the variety of vending machine-dispensed capsule toys that originated in the 1960s, it became popular in Japan and elsewhere.</p>
               <h1 className="text-2xl font-semibold mt-5">Try it on Warpcast</h1>
               <Button />
