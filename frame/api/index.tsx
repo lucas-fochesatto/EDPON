@@ -10,27 +10,18 @@ import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
-// import getUri from '../lib/contracts/getUri.js';
-// import { Address } from 'viem';
 import getUri from '../lib/zora/getUri.js';
 import getLink from '../lib/metadata/getLink.js';
 import getNextTokenId from '../lib/zora/getNextTokenId.js';
-
-// *****************************************************************************************************
-// THIS IMPORT MAY BE USEFUL 
-// import { Box, Heading, Text, VStack, vars } from "../lib/ui.js"
-// import { parse } from 'postcss';
-// import { db, addDoc, collection, updateDoc, doc, getDoc, getDocs } from '../utils/firebaseConfig.js'
-// import { collectionsApp } from './collections.js'
-// import { verificationsApp } from './verification.js'
-// *****************************************************************************************************
-
 const title = 'edpon';
 const minter = '0x04E2516A2c207E84a1839755675dfd8eF6302F0a';
 const quantity = 1n;
 const SHARE_INTENT = 'https://warpcast.com/~/compose?text=';
 const SHARE_TEXT = encodeURI('Check out Kismet Gachapon!');
 const SHARE_EMBEDS = '&embeds[]=';
+const FRAME_URL = 'https://edpon-frames.vercel.app/api/';
+
+
 
 export const app = new Frog({
   title,
@@ -57,7 +48,7 @@ app.frame('/', (c) => {
     intents: [
       <Button action=''>LEARN MORE</Button>,
       <Button action='/verify/0'>PLAY 🕹️</Button>,
-      <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}https://edpon-frames.vercel.app/api/`}>CAST</Button.Link>,
+      <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}${FRAME_URL}`}>CAST</Button.Link>,
     ],
 
   })
@@ -247,7 +238,7 @@ app.frame('/result/:collection/:id', async (c) => {
     image: `${image.src || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
-        <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}/https://edpon-frames.vercel.app/api/result/collection/tokenId`}>CAST</Button.Link>, 
+        <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}${FRAME_URL}result/${collection}/${tokenId}`}>CAST</Button.Link>, 
         <Button.Reset>PLAY AGAIN</Button.Reset>,
     ],
   })
