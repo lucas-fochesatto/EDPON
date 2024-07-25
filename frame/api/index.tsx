@@ -20,7 +20,7 @@ const SHARE_INTENT = 'https://warpcast.com/~/compose?text=';
 const SHARE_TEXT = encodeURI('Check out Kismet Gachapon!');
 const SHARE_EMBEDS = '&embeds[]=';
 const FRAME_URL = 'https://edpon-frames.vercel.app/api/';
-
+const ZORA_EXPLORER = 'https://explorer.zora.energy/token/'
 
 
 export const app = new Frog({
@@ -238,8 +238,40 @@ app.frame('/result/:collection/:id', async (c) => {
     image: `${image.src || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
-        <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}${FRAME_URL}result/${collection}/${tokenId}`}>CAST</Button.Link>, 
+        <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}${FRAME_URL}share/${collection}/${tokenId}`}>CAST</Button.Link>, 
         <Button.Reset>PLAY AGAIN</Button.Reset>,
+    ],
+  })
+})
+
+app.frame('/share/:collection/:id', async (c) => {
+  const collection = c.req.param('collection') as `0x${string}`;
+  const tokenId = c.req.param('id');
+
+  let image;
+  try {
+    const uri = await getUri(collection, BigInt(tokenId));
+    const urlLink = getLink(uri);
+    const response = await fetch(urlLink);
+    const data = await response.json();
+    const { image: responseImage } = data;
+    const src = getLink(responseImage);
+    image = {
+      src: `${src}`,
+    };
+  } catch (error) {
+    console.log(error);
+    image = {
+      src: `/errorImg.jpeg`
+    };
+  }
+  return c.res({
+    title,
+    image: `${image.src || '/test.png'}`,
+    imageAspectRatio: '1:1',
+    intents: [
+        <Button.Link href={`${ZORA_EXPLORER}${collection}?tab=token_transfers`}>CHECK ETHSCAN</Button.Link>, 
+        <Button.Reset>PLAY</Button.Reset>,
     ],
   })
 })
