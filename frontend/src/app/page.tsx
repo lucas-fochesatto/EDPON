@@ -1,10 +1,14 @@
 'use client'
 
+import { useState } from "react";
+import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import Header from './components/Header'
 import Button from "./components/Button";
+import Popup from "@/components/Popup";
+
 /* 
   tasks para essa página:
   1. verificar se o creator já possui conta na nossa plataforma
@@ -13,6 +17,15 @@ import Button from "./components/Button";
 
 export default function Home() {
   const { address } = useAccount();
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+  const openPopup = () => {
+    setIsPopupOpen(true);
+  };
+
+  const closePopup = () => {
+    setIsPopupOpen(false);
+  };
 
   return (
     <>
@@ -38,7 +51,13 @@ export default function Home() {
       <img src="/gachamachine.gif" width='70%'/>
       </div>
       </div>
+    /*
+    <div className="h-[100vh] flex flex-col items-center justify-center gap-8">
+      <h1 className="text-3xl font-bold">Make your NFTs popular by frames</h1>
+      <p className="text-xl">First, login into our service</p>
+      <ConnectButton label="Login" accountStatus={"address"} chainStatus={"none"} />
     </div>
+    */
     </>
   )
 }

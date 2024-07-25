@@ -59,7 +59,8 @@ export default function Mint() {
         // remember that it needs to be first minted before
         const danoWallet = "0xC1bd4Aa0a9ca600FaF690ae4aB67F15805d8b3A1"
 
-        const parameters = await mint({ chainId, publicClient, collectionAddress: await collectionAddress(), tokenId, mintReferral: danoWallet, minterAccount: address! });
+        // const parameters = await mint({ chainId, publicClient, collectionAddress: await collectionAddress(), tokenId, mintReferral: danoWallet, minterAccount: address! });
+        const parameters = await mint({ chainId, publicClient, collectionAddress: '0xf2aeFC2Bb3EF8199FfA8E983a8E30a5796E6CB9d', tokenId, mintReferral: danoWallet, minterAccount: address! });
 
         console.log(parameters)
 

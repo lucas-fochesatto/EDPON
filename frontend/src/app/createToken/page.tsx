@@ -25,11 +25,11 @@ function formatBytes(a: number,b=2){if(!+a)return"0 Bytes";const c=0>b?0:b,d=Mat
 
 /* 
     tasks que ainda faltam:
-    1. upload da collection cover
+
     2. fetch no backend ao clicar em add collection
     3. usar as funções da rede da zora para setar um contrato novo
-    4. formulario para criar um token se selecionar uma colecao previamente criada
-    5. upload das imagens das artes
+
+
     6. fetch no backend (talvez nao precisa) para adicionar as artes
     7. criar o tokenMetadata através dos dados fornecidos no formulário
     8. usar as funções da rede da zora para criar os tokens
@@ -52,11 +52,13 @@ export default function createToken() {
     const [tokens, setTokens] = useState<any[]>([]);
     const [already, setAlready] = useState<number>(0);
     const [file, setFile] = useState<File>();
+    const [artFile, setArtFile] = useState<File>();
     const [imagePreview, setImagePreview] = useState<any>();
+    const [artImagePreview, setArtImagePreview] = useState<any>();
+    const [tokenName, setTokenName] = useState("");
     
     const [alreadyForm, setAlreadyForm] = useState({
         address: "",
-        description: ""
     })
 
     const [notAlreadyForm, setNotAlreadyForm] = useState({
@@ -108,6 +110,12 @@ export default function createToken() {
         functionName: "owner",
     })
 
+    const { data: collectionURI } = useReadContract({
+        abi: zoraCreator1155ImplABI,
+        address: alreadyForm.address as `0x${string}`,
+        functionName: "contractURI",
+    })
+
     // handle option change
     const handleSelectedCollection = (e : any) => {
         setSelectedCollection(e.target.value)
@@ -131,7 +139,7 @@ export default function createToken() {
         }))
     }
 
-    const handleImageChange = (e: any) => {
+    const handleCoverChange = (e: any) => {
         const file : File = e.target.files[0];
 
         // generate imagePreview
@@ -145,6 +153,20 @@ export default function createToken() {
         }
     };
 
+    const handleArtChange = (e: any) => {
+        const artFile : File = e.target.files[0];
+
+        // generate imagePreview
+        if (artFile) {
+            setArtFile(artFile);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setArtImagePreview(reader.result);
+            };
+            reader.readAsDataURL(artFile);
+          }
+    }
+
     const handleAddCollection = async () => {
         // verify if user owns the contract
         console.log(collectionOwnerAddress)
@@ -154,7 +176,80 @@ export default function createToken() {
         }
 
         // fetch to backend
-        
+        const url = 'https://cyan-accepted-kangaroo-492.mypinata.cloud/ipfs/' + collectionURI?.split('/')[2]
+        const response = await fetch(url)
+        const data = await response.json();
+
+        const collectionName  = data.name;
+        const collectionCover = data.image;
+    }
+
+    const handleCreateCollection = async () => {
+        if(!notAlreadyForm.collectionName) {
+            alert("Please fill in collection name")
+            return
+        }
+
+        if(!file) {
+            alert("Please choose a collection cover")
+            return
+        }
+
+        try {
+            const formData = new FormData()
+
+            formData.set("file", file)
+            formData.set("form", JSON.stringify(notAlreadyForm))
+
+            const response = await fetch("/api/upload-cover",  {
+                method: 'POST',
+                body: formData
+            })
+
+            if(response.ok) {
+                const data = await response.json()
+                const pathToCover = data.path
+
+                // fetch no backend para adicionar no banco de dados
+            }
+
+        } catch (err) {
+            console.log(err)
+        }
+    }
+
+    const handleCreateToken = async () => {
+        if(!tokenName) {
+            alert("Please fill in token name")
+            return
+        }
+
+        if(!artFile) {
+            alert("Please choose an image")
+            return
+        }
+
+        try {
+            const formData = new FormData()
+
+            formData.set("file", artFile)
+            formData.set("tokenName", tokenName)
+
+            const response = await fetch("/api/upload-art",  {
+                method: 'POST',
+                body: formData
+            })
+
+            if(response.ok) {
+                const data = await response.json()
+                console.log(data)
+                const pathToArt = data.path
+
+                // fetch no backend para adicionar no banco de dados
+            }
+        } catch(err) {
+            console.log(err)
+        }
     }
 
     return (
@@ -257,21 +352,18 @@ export default function createToken() {
                                                     <p className="text-xs">PNG, JPEG and GIF supported. Max size 5MB.</p>
                                                 </div>
                                                 </>
-                                                }
-                                                
+                                                }  
                                             </label>
-                                            <input type="file" id="file-upload" onChange={handleImageChange} hidden />
+                                            <input type="file" id="file-upload" onChange={handleCoverChange} hidden />
                                         </div>
-                                        <button onClick={handleAddCollection} className="mt-2 bg-[black] text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
+                                        <button onClick={handleCreateCollection} className="mt-2 bg-[black] text-white font-bold rounded-md cursor-pointer px-4 py-2">Add collection</button>
                                     </div>
                                 }
                             </div>
-
-
                         </div>
                         :
-                        <div className="w-1/2"> 
-                            <h1 className="text-lg m-4">Tokens on this collection</h1>
+                        <div className="w-[40%] border border-stone-900 rounded-md bg-neutral-950 p-4"> 
+                            <h1 className="text-xl font-bold mb-4">Setup a new art</h1>
                             { 
                                 tokens.filter(token => token.token.contract.address === collections.find(collection => collection.collectionName === selectedCollection)?.ArtCollectionAddress).map((token, index) => (
                                     <div key={index} className="flex items-center px-4 py-2 gap-4 hover:bg-gray-800 cursor-pointer border-b border-gray-300 w-full last:border-0">
@@ -279,6 +371,36 @@ export default function createToken() {
                                     </div>
                                 ))
                             }
+                            <div className="w-full flex flex-col items-center bg-[rgb(5,5,5)] p-4 border border-stone-900 rounded-md ">
+                                <label htmlFor="art-upload" className="w-[80%] aspect-square border-2 border-stone-900 rounded-md cursor-pointer">
+                                    <div className="flex flex-col gap-4 items-center justify-center h-full">
+                                        { artImagePreview ? 
+                                            <>
+                                            <img src={artImagePreview} alt="image" className="object-cover w-full h-full"/>
+                                            </>
+                                            :
+                                            <>
+                                            <div className="text-center">
+                                                <p className="text-sm font-bold">Select a file</p>
+                                                <p className="text-xs">PNG, JPEG and GIF supported. Max size 5MB.</p>
+                                            </div>
+                                            <Upload size={32} />
+                                            </>
+                                        }
+                                        
+                                    </div>
+                                </label>
+                                <input type="file" id="art-upload" onChange={handleArtChange} hidden />
+
+                                <div className="w-full flex flex-col items-center gap-2 mt-4">
+                                    <div className="flex flex-col gap-1 w-full">
+                                        <h2 className="text-xs">Token name</h2>
+                                        <input type="text" name="tokenName" value={tokenName} placeholder="Nice name here" onChange={(e) => setTokenName(e.target.value)} className="w-full bg-[rgb(5,5,5)] text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
+                                    </div> 
+                                    <button onClick={handleCreateToken} className="mt-2 bg-neutral-950 rounded-md cursor-pointer px-4 py-2">Submit</button>
+                                </div>
+                            </div>
+
                         </div>
                     }
                 </div> 
