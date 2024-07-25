@@ -26,9 +26,7 @@ import getNextTokenId from '../lib/zora/getNextTokenId.js';
 // *****************************************************************************************************
 
 const title = 'edpon';
-// const CUSTOM_COLLECTIONS = '0x0DEA6B5c7372b3414611e70e15E474521E0fc686';
 const minter = '0x04E2516A2c207E84a1839755675dfd8eF6302F0a';
-// const tokenId = '1'
 const quantity = 1n;
 
 export const app = new Frog({
@@ -55,7 +53,9 @@ app.frame('/', (c) => {
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
     intents: [
+      <Button action=''>LEARN MORE</Button>,
       <Button action='/verify/0'>PLAY 🕹️</Button>,
+      <Button action=''>CAST</Button>,
     ],
 
   })
@@ -95,12 +95,10 @@ app.frame('/verify/:id', async (c) => {
       : (await dbapi.fetchArtCollections());
 
   const boundedIndex = ((index % collections.length) + collections.length) % collections.length;
-
   const currentCollection = collections[boundedIndex];
   const collectionName = currentCollection.collectionName;
   const artistName = currentCollection.creatorName;
   const collectionAddress = currentCollection.ArtCollectionAddress as Address; //fix backend
-
   const numOfNFTs = parseInt((await getNextTokenId(collectionAddress)).toString());
   const tokenId = Math.floor(Math.random() * numOfNFTs - 1) + 1;
 
@@ -140,9 +138,6 @@ app.frame('/verify/:id', async (c) => {
       <Button action={`/verify/${boundedIndex === 0 ? (collections.length - 1) : (boundedIndex - 1)}`}>⬅️</Button>,
       <Button action={`/verify/${(boundedIndex + 1) % collections.length}`}>➡️</Button>,
       <Button.Transaction action={`/loading/${collectionAddress}/${tokenId}/0`} target={`/mint/${collectionAddress}/${tokenId}`}>MINT!</Button.Transaction>,
-      <Button action={`/result/${collectionAddress}/${tokenId}`}>test result</Button>,
-      // <Button action={`/loading/${collectionAddress}/${tokenId}/0`}>test loading</Button>,
-      // <Button.Reset>Reset</Button.Reset>,
     ],
   })
 });
@@ -157,7 +152,6 @@ app.transaction('/mint/:collection/:tokenId', async (c) => {
       ? (c.previousState as any).verifiedAddresses
       : ((c.previousState as any).verifiedAddresses = await getFarcasterUserInfo(c.frameData?.fid));
 
-
   const minterArguments = encodeAbiParameters(
     [
       { name: 'mintTo', type: 'address' },
@@ -168,7 +162,6 @@ app.transaction('/mint/:collection/:tokenId', async (c) => {
   return c.contract({
     abi: zora1155Implementation,
     chainId: `eip155:${zora.id}`,
-    // chainId: 'eip155:11155111',
     functionName: 'mintWithRewards', //change to mint and add create refferal
     args: [
       minter,
@@ -258,7 +251,7 @@ app.frame('/result/:collection/:id', async (c) => {
     image: `${image.src || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>SHARE</Button>, // remember to do this
+      <Button action='/'>CAST</Button>, // remember to do this
       <Button.Reset>PLAY AGAIN</Button.Reset>,
     ],
   })
