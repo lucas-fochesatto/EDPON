@@ -38,7 +38,6 @@ export const app = new Frog({
   basePath: '/api',
   // browserLocation: '/',
   ui: { vars },
-  // Supply a Hub to enable frame verification.
   //hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 
   initialState: {
@@ -64,7 +63,7 @@ app.frame('/', (c) => {
   })
 })
 
-// verify Farcaster fid 
+// Verify Farcaster fid 
 app.frame('/verify/:id', async (c) => {
   if (c.frameData?.fid) {
     const { verifiedAddresses } = await getFarcasterUserInfo(c.frameData?.fid);
@@ -165,7 +164,7 @@ app.transaction('/mint/:collection/:tokenId', async (c) => {
   return c.contract({
     abi: zora1155Implementation,
     chainId: `eip155:${zora.id}`,
-    functionName: 'mintWithRewards', //change to mint and add create refferal
+    functionName: 'mintWithRewards', //change to mint and add create referral
     args: [
       minter,
       BigInt(tokenId),
@@ -206,7 +205,6 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
       imageAspectRatio: '1:1',
       intents: [
         <Button action={`/result/${collection}/${tokenId}`}>OPEN CAPSULE</Button>,
-        // <Button.Reset>LOADING SCREEN</Button.Reset>,
       ],
     })
   }
@@ -217,7 +215,6 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
       imageAspectRatio: '1:1',
       intents: [
         <Button action={`/loading/${collection}/${tokenId}/${c.transactionId}`}>REFRESH</Button>,
-        // <Button.Reset>LOADING SCREEN</Button.Reset>,
       ],
     })
   }
@@ -229,7 +226,6 @@ app.frame('/result/:collection/:id', async (c) => {
   const tokenId = c.req.param('id');
 
   let image;
-
   try {
     const uri = await getUri(collection, BigInt(tokenId));
     const urlLink = getLink(uri);
@@ -237,13 +233,11 @@ app.frame('/result/:collection/:id', async (c) => {
     const data = await response.json();
     const { image: responseImage } = data;
     const src = getLink(responseImage);
-
     image = {
       src: `${src}`,
     };
   } catch (error) {
     console.log(error);
-
     image = {
       src: `/errorImg.jpeg`
     };
@@ -264,7 +258,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 serve({ fetch: app.fetch, port: Number(process.env.PORT) || 5173 });
-
 console.log(`Server started: ${new Date()} `);
 
 export const GET = handle(app)
