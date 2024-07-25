@@ -28,6 +28,9 @@ import getNextTokenId from '../lib/zora/getNextTokenId.js';
 const title = 'edpon';
 const minter = '0x04E2516A2c207E84a1839755675dfd8eF6302F0a';
 const quantity = 1n;
+const SHARE_INTENT = 'https://warpcast.com/~/compose?text=';
+const SHARE_TEXT = encodeURI('Check out Kismet Gachapon!');
+const SHARE_EMBEDS = '&embeds[]=';
 
 export const app = new Frog({
   title,
@@ -55,7 +58,7 @@ app.frame('/', (c) => {
     intents: [
       <Button action=''>LEARN MORE</Button>,
       <Button action='/verify/0'>PLAY 🕹️</Button>,
-      <Button action=''>CAST</Button>,
+      <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}/api/share/`}>CAST</Button.Link>,
     ],
 
   })
@@ -245,14 +248,13 @@ app.frame('/result/:collection/:id', async (c) => {
       src: `/errorImg.jpeg`
     };
   }
-
   return c.res({
     title,
     image: `${image.src || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button action='/'>CAST</Button>, // remember to do this
-      <Button.Reset>PLAY AGAIN</Button.Reset>,
+        <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}/api/share/`}>CAST</Button.Link>, 
+        <Button.Reset>PLAY AGAIN</Button.Reset>,
     ],
   })
 })
