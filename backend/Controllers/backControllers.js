@@ -90,11 +90,13 @@ export const getArtCollections = async (req, res, next) => {
                     // doc.id,
                     doc.data().artCollectionId,
                     doc.data().artCollectionAddress,
+                    doc.data().collectionURI,
                     doc.data().creatorId,
                     doc.data().creatorName,
                     doc.data().collectionName,
                     doc.data().collectionCoverUrl,
                     doc.data().description,
+                    doc.data().createdAt,
                     doc.data().price,
                     doc.data().isFree
                 );
@@ -308,11 +310,13 @@ export const getCreatorArtCollections = async (req, res, next) => {
                     const artCollection = new ArtCollection(
                         doc.data().artCollectionId,
                         doc.data().artCollectionAddress,
+                        doc.data().collectionURI,
                         doc.data().creatorId,
                         doc.data().creatorName,
                         doc.data().collectionName,
                         doc.data().collectionCoverUrl,
                         doc.data().description,
+                        doc.data().createdAt,
                         doc.data().price,
                         doc.data().isFree
                     );
