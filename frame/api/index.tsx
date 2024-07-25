@@ -8,9 +8,9 @@ import { getFarcasterUserInfo } from '../lib/neynar.js';
 import { vars } from '../lib/ui.js';
 import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
-// import { zora } from 'viem/chains';
+import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
-import { SHARE_INTENT, SHARE_TEXT, SHARE_NFT_TEXT, SHARE_EMBEDS, FRAME_URL, ZORA_EXPLORER } from '../utils/links.js';
+import { SHARE_INTENT, SHARE_TEXT, SHARE_NFT_TEXT, SHARE_EMBEDS, FRAME_URL, ZORA_EXPLORER, IPFS_ZORA_URL } from '../utils/links.js';
 import getUri from '../lib/zora/getUri.js';
 import getLink from '../lib/metadata/getLink.js';
 import getNextTokenId from '../lib/zora/getNextTokenId.js';
@@ -53,15 +53,16 @@ app.frame('/', (c) => {
 
 // Verify Farcaster fid 
 app.frame('/verify/:id', async (c) => {
-  if (c.frameData?.fid) {
-    const { verifiedAddresses } = await getFarcasterUserInfo(c.frameData?.fid);
+  const fid = c.frameData?.fid;
+  if (fid) {
+    const { verifiedAddresses } = await getFarcasterUserInfo(fid);
     if (!verifiedAddresses || verifiedAddresses.length === 0) {
       return c.res({
         title,
         image: '/insert-token.gif',
         imageAspectRatio: '1:1',
         intents: [
-          <Button action="/">RETURN</Button>,
+          <Button action={`https://verify.warpcast.com/verify/${fid}`}>VERIFY WALLET</Button>,
           <Button.Reset>RESET</Button.Reset>,
         ],
       });
@@ -139,7 +140,6 @@ app.frame('/verify/:id', async (c) => {
   })
 });
 
-
 app.transaction('/mint/:collection/:tokenId', async (c) => {
   const collection = c.req.param('collection') as `0x${string}`;
   const tokenId = c.req.param('tokenId');
@@ -161,8 +161,8 @@ app.transaction('/mint/:collection/:tokenId', async (c) => {
 
   return c.contract({
     abi: zora1155Implementation,
-    // chainId: `eip155:${zora.id}`,
-    chainId: `eip155:11155111`,
+    chainId: `eip155:${zora.id}`,
+    // chainId: `eip155:11155111`,
     // functionName: 'mintWithRewards', //change to mint and add create referral
     functionName: 'mint',
     args: [
@@ -251,7 +251,7 @@ app.frame('/result/:collection/:id/:txId', async (c) => {
     image: `${image.src || '/errorImg.jpeg'}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button.Link href={`${SHARE_INTENT}${SHARE_NFT_TEXT}${SHARE_EMBEDS}${FRAME_URL}/share/${encodeURIComponent(image.src)}`}>SHARE</Button.Link>,
+      <Button.Link href={`${SHARE_INTENT}${SHARE_NFT_TEXT}${SHARE_EMBEDS}${FRAME_URL}/share/${image.src.split(IPFS_ZORA_URL)[1] || `errorImg.jpeg`}`}>SHARE</Button.Link>,
       <Button.Link href={`${ZORA_EXPLORER}/tx/${txId}`}>CHECK ETHSCAN</Button.Link>,
       <Button.Reset>PLAY AGAIN🕹️</Button.Reset>,
     ],
@@ -259,7 +259,7 @@ app.frame('/result/:collection/:id/:txId', async (c) => {
 })
 
 app.frame('/share/:ntfImg', async (c) => {
-  const nftImg = c.req.param('nftImg');
+  const nftImg = `${IPFS_ZORA_URL}${c.req.param('nftImg')}`;
 
   return c.res({
     title,
