@@ -6,32 +6,32 @@ import { useEffect, useState } from "react";
 import { useAccount, useChainId, usePublicClient, useReadContract } from "wagmi";
 import { useRouter } from 'next/navigation'
 import { Circle, CircleCheck, PlusIcon, Upload } from "lucide-react";
-import fetchTokens from "@/lib/fetchTokens";
 import Header from '../components/Header';
 import './style.css'
+import { makeContractMetadata, makeImageTokenMetadata } from "@/lib/metadata";
+import retrieveContractAddress from "@/lib/retrieveContractAddress";
 
 type ArtCollectionType = {
-    ArtCollectionAddress: `0x${string}`,
-    ArtCollectionId: string,
-    collectionCoverUrl: string,
-    collectionName: string,
+    artCollectionId: string,
+    artCollectionAddress: `0x${string}`,
+    collectionURI: string,
     creatorId: string,
     creatorName: string,
+    collectionName: string,
+    collectionCoverUrl: string,
     description: string,
-    price: any // idk why it's true on data
+    createdAt: string,
+    price: any, // idk why it's true on data
+    isFree: boolean,
+    createdByEDPON: boolean
 }
 
 function formatBytes(a: number,b=2){if(!+a)return"0 Bytes";const c=0>b?0:b,d=Math.floor(Math.log(a)/Math.log(1024));return`${parseFloat((a/Math.pow(1024,d)).toFixed(c))} ${["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"][d]}`}
 /* 
     tasks que ainda faltam:
 
-    2. fetch no backend ao clicar em add collection
-    3. usar as funções da rede da zora para setar um contrato novo
-
-
-    6. fetch no backend (talvez nao precisa) para adicionar as artes
-    7. criar o tokenMetadata através dos dados fornecidos no formulário
-    8. usar as funções da rede da zora para criar os tokens
+    1. usar as funções da rede da zora para setar um contrato novo
+    2. usar as funções da rede da zora para criar os tokens
     
     Brasil :)
 */
@@ -39,15 +39,11 @@ function formatBytes(a: number,b=2){if(!+a)return"0 Bytes";const c=0>b?0:b,d=Mat
 export default function createToken() {
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    const chainId = useChainId();
-    const publicClient = usePublicClient();
-
     const router = useRouter()
     const {address} = useAccount();
 
     const [collections, setCollections]  = useState<ArtCollectionType[]>([]);
     const [selectedCollection, setSelectedCollection] = useState<string>('create-new');
-    const [tokens, setTokens] = useState<any[]>([]);
     const [already, setAlready] = useState<number>(0);
     const [file, setFile] = useState<File>();
     const [artFile, setArtFile] = useState<File>();
@@ -66,34 +62,19 @@ export default function createToken() {
     
     // retrieve all collections from user
     useEffect(() => {
-        // if(!realAddress) router.push('/');
+        if(!address) return
         fetch(`${apiUrl}/get-creator/${address}`)
             .then(res => res.json())
             .then(data => (data.creatorId))
             .then(creatorId => fetch(`${apiUrl}/get-creator-collections/${creatorId}`))
             .then(res => res.json())
             .then((data : ArtCollectionType[]) => {
-                console.log(data)
-                if(!data) return
+                if(data.length == 0) return
                 localStorage.setItem('collections', JSON.stringify(data))
                 setSelectedCollection(data[0].collectionName)
                 setCollections(data)
             })
-    }, [])
-
-    // fetch tokens from all collections
-    useEffect(() => {
-        if(!collections.length) return;
-
-        let tokens: any[] = []
-        collections.map(async (collection) => {
-            const collectionAddress = collection.ArtCollectionAddress;
-
-            const collectionTokens = await fetchTokens({chainId, collectionAddress, publicClient})
-
-            tokens = [...tokens, ...collectionTokens.tokens]
-        })
-    }, [collections])
+    }, [address])
 
     // hook that reads the owner from the contract address provided on alreadyForm
     const { data: collectionOwnerAddress } = useReadContract({
@@ -169,35 +150,41 @@ export default function createToken() {
         if(collectionOwnerAddress !== address) {
             alert("You don't own this contract")
             return;
-        } 
+        }
 
         // retrieve colllection info
         const response = await fetch('https://ipfs.decentralized-content.com/ipfs/' + collectionURI?.split('/')[2])
         const data = await response.json();
         const collectionName  = data.name;
+        const description = data.description || '';
         const collectionCoverUrl = data.image;
 
-        // fetch to backend
         const creatorId = localStorage.getItem('userId');
 
+        // fetch to backend
         const fetchData = {
-            ArtCollectionAddress: alreadyForm.address,
+            artCollectionAddress: alreadyForm.address,
+            collectionURI,
             creatorId,
             creatorName: '',
             collectionName,
             collectionCoverUrl,
-            description: '',
+            description,
             price: 0,
-            isFree: true
+            isFree: true,
+            createdByEDPON: false
         }
         
         const res = await fetch(`${apiUrl}/create-art-collection`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(fetchData)
         })
 
         if(res.ok) {
-            
+            router.refresh()
         }
     }
 
@@ -212,26 +199,38 @@ export default function createToken() {
             return
         }
 
-        try {
-            const formData = new FormData()
+        const { contractMetadataJsonUri, imageFileIpfsUrl } = await makeContractMetadata({
+            imageFile: file,
+            name: notAlreadyForm.collectionName,
+            description: notAlreadyForm.description
+        })
 
-            formData.set("file", file)
-            formData.set("form", JSON.stringify(notAlreadyForm))
+        const creatorId = localStorage.getItem('userId')
 
-            const response = await fetch("/api/upload-cover",  {
-                method: 'POST',
-                body: formData
-            })
+        // fetch collection to backend
+        const fetchData = {
+            artCollectionAddress: '',
+            collectionURI: contractMetadataJsonUri,
+            creatorId,
+            creatorName: '',
+            collectionName:  notAlreadyForm.collectionName,
+            collectionCoverUrl: imageFileIpfsUrl,
+            description: notAlreadyForm.description,
+            price: 0,
+            isFree: true,
+            createdByEDPON: true
+        }
 
-            if(response.ok) {
-                const data = await response.json()
-                const pathToCover = data.path
+        const res = await fetch(`${apiUrl}/create-art-collection`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(fetchData)
+        })
 
-                // fetch no backend para adicionar no banco de dados
-            }
-
-        } catch (err) {
-            console.log(err)
+        if(res.ok) {
+            router.refresh()
         }
     }
 
@@ -246,27 +245,12 @@ export default function createToken() {
             return
         }
 
-        try {
-            const formData = new FormData()
+        const tokenMetadataJsonUri = await makeImageTokenMetadata({
+            imageFile: artFile,
+            tokenName 
+        })
 
-            formData.set("file", artFile)
-            formData.set("tokenName", tokenName)
-
-            const response = await fetch("/api/upload-art",  {
-                method: 'POST',
-                body: formData
-            })
-
-            if(response.ok) {
-                const data = await response.json()
-                console.log(data)
-                const pathToArt = data.path
-
-                // fetch no backend para adicionar no banco de dados
-            }
-        } catch(err) {
-            console.log(err)
-        }
+        console.log(tokenMetadataJsonUri)
     }
 
     return (
@@ -288,7 +272,15 @@ export default function createToken() {
                                     <input type="radio" id={`collection-${index}`} name="collection" value={collection.collectionName} onChange={handleSelectedCollection} checked={selectedCollection === collection.collectionName} hidden />
                                     <label htmlFor={`collection-${index}`} className="w-full flex items-center justify-between cursor-pointer">
                                         <div className="flex items-center gap-2">
-                                            <img src={collection.collectionCoverUrl} alt="collection cover" className="w-[20px] h-[20px] object-cover rounded-md"/>
+                                            <img 
+                                                src = {
+                                                    collection.createdByEDPON ?
+                                                    `${process.env.NEXT_PUBLIC_PINATA_GATEWAY}/ipfs/${collection.collectionCoverUrl.split('/')[2]}` 
+                                                    :
+                                                    `https://ipfs.decentralized-content.com/ipfs/${collection.collectionCoverUrl.split('/')[2]}`
+                                                }
+                                                alt="collection cover" className="w-[20px] h-[20px] object-cover rounded-md"
+                                            />
                                             <h3 className="text-base">{collection.collectionName}</h3>
                                         </div>
                                         {
@@ -379,13 +371,6 @@ export default function createToken() {
                         :
                         <div className="w-[40%] border border-stone-900 rounded-md bg-[rgb(238,238,238)] p-4"> 
                             <h1 className="text-xl font-bold mb-4">Setup a new art</h1>
-                            { 
-                                tokens.filter(token => token.token.contract.address === collections.find(collection => collection.collectionName === selectedCollection)?.ArtCollectionAddress).map((token, index) => (
-                                    <div key={index} className="flex items-center px-4 py-2 gap-4 hover:bg-gray-800 cursor-pointer border-b border-gray-300 w-full last:border-0">
-                                        <img src={token.token.metadata?.image} alt="token image" className="w-8 h-8 object-cover rounded-md"/>
-                                    </div>
-                                ))
-                            }
                             <div className="w-full flex flex-col items-center bg-white p-4 border border-stone-900 rounded-md ">
                                 <label htmlFor="art-upload" className="w-[80%] aspect-square border-2 border-stone-900 rounded-md cursor-pointer">
                                     <div className="flex flex-col gap-4 items-center justify-center h-full">
