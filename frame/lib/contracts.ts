@@ -1,9 +1,9 @@
 import { Chain, createPublicClient, http } from "viem"
-import { sepolia } from 'viem/chains';
+import { zora } from 'viem/chains';
 import getViemNetwork from "./clients/getViemNetwork.js"
 
 export const publicClient = createPublicClient({
-    chain: sepolia, // change to zora mainnet
+    chain: zora, // change to zora mainnet
     transport: http(),
   });
 

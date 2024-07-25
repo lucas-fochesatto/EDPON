@@ -8,7 +8,7 @@ import { getFarcasterUserInfo } from '../lib/neynar.js';
 import { vars } from '../lib/ui.js';
 import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
-// import { zora } from 'viem/chains';
+import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
 // import getUri from '../lib/contracts/getUri.js';
 // import { Address } from 'viem';
@@ -167,8 +167,8 @@ app.transaction('/mint/:collection/:tokenId', async (c) => {
   );
   return c.contract({
     abi: zora1155Implementation,
-    //  chainId: `eip155:${zora.id}`,
-    chainId: 'eip155:11155111',
+    chainId: `eip155:${zora.id}`,
+    // chainId: 'eip155:11155111',
     functionName: 'mintWithRewards', //change to mint and add create refferal
     args: [
       minter,
@@ -227,18 +227,6 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
   }
 })
 
-// app.frame('/success/:id', async (c) => {
-//   const tokenId = c.req.param('id');
-//   return c.res({
-//     title,
-//     image: `/pokeball.gif`,
-//     imageAspectRatio: '1:1',
-//     intents: [
-//       <Button action={`/result/${tokenId}`}>OPEN CAPSULE</Button>,
-//       // <Button.Reset>RESET</Button.Reset>,
-//     ],
-//   })
-// })
 
 app.frame('/result/:collection/:id', async (c) => {
   const collection = c.req.param('collection') as `0x${string}`;
