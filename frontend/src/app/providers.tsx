@@ -6,7 +6,7 @@ import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 
 import { config } from '../wagmi';
-import { zoraSepolia } from 'viem/chains';
+import { zora } from 'viem/chains';
 
 const queryClient = new QueryClient();
 
@@ -14,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider initialChain={zoraSepolia}>{children}</RainbowKitProvider>
+        <RainbowKitProvider initialChain={zora}>{children}</RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
