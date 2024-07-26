@@ -1,7 +1,7 @@
 
-export default function Fetching({ width } : { width: string }) {
+export default function Fetching({ width, border = 'border-2' } : { width: string; border?: string }) {
   return (
-    <div className={`animate-pulse ${width} border-2 border-stone-900 rounded-md bg-white p-4 flex space-x-4`}>
+    <div className={`animate-pulse ${width} ${border} border-stone-900 rounded-md bg-white p-4 flex space-x-4`}>
       {/* <div className="rounded-full bg-gray-500 h-10 w-10"></div> */}
       <div className="flex-1 space-y-6 py-1">
         <div className="h-2 bg-gray-500 rounded"></div>
