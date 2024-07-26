@@ -31,14 +31,6 @@ type ArtCollectionType = {
 }
 
 function formatBytes(a: number,b=2){if(!+a)return"0 Bytes";const c=0>b?0:b,d=Math.floor(Math.log(a)/Math.log(1024));return`${parseFloat((a/Math.pow(1024,d)).toFixed(c))} ${["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"][d]}`}
-/* 
-    tasks que ainda faltam:
-
-    1. usar as funções da rede da zora para setar um contrato novo
-    2. usar as funções da rede da zora para criar os tokens
-    
-    Brasil :)
-*/
 
 export default function CreateToken() {
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -59,6 +51,7 @@ export default function CreateToken() {
     const [tokenName, setTokenName] = useState("");
     const [loadingCreate, setLoadingCreate] = useState(false);
     const [loadingCollections, setLoadingCollections] = useState(true);
+    const [loadingCreateToken, setLoadingCreateToken] = useState(false);
     
     const [alreadyForm, setAlreadyForm] = useState({
         address: "",
@@ -276,9 +269,13 @@ export default function CreateToken() {
         if(!balance.isSuccess) return
 
         if(balance.data.value < parseEther("0.000777")) {
-            alert("You need at least 0.000777 ETH. You will receive some back. Check at zora.co after minting")
+            alert("You need at least 0.000777 ETH. You will receive 0.000444 ETH back at zora.co")
             return
         }
+
+        if(loadingCreateToken) return
+
+        setLoadingCreateToken(true)
 
         // retrieve collection info
         const collection = collections[selectedCollectionIndex]
@@ -289,12 +286,6 @@ export default function CreateToken() {
         })
 
         const mintReferral = process.env.NEXT_PUBLIC_MINT_REFERRAL as `0x${string}`
-
-        console.log({
-            contractAdmin: address!,
-            contractName: collection?.collectionName!,
-            contractURI: collection?.collectionURI!
-        })
 
         const { collectionAddress } = await createTokenAndCollection({
             chainId,
@@ -312,9 +303,19 @@ export default function CreateToken() {
             }
         })
 
-        const parameters = await firstMint({ address: address!, mintReferral, collectionAddress, chainId, publicClient });
+        // patch collection to add field collectionAddress
+        await fetch(`${apiUrl}/patch-art-collection/${collection.artCollectionId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ artCollectionAddress: collectionAddress })
+        })
 
+        const parameters = await firstMint({ address: address!, mintReferral, collectionAddress, chainId, publicClient });
         writeContract(parameters)
+
+        setLoadingCreateToken(false)
     }
 
     return (
@@ -468,7 +469,9 @@ export default function CreateToken() {
                                             <h2 className="text-xs">Token name</h2>
                                             <input type="text" name="tokenName" value={tokenName} placeholder="Nice name here" onChange={(e) => setTokenName(e.target.value)} className="w-full bg-gray-100 text-base px-2 py-1 border border-stone-900 rounded-md w-full"/>
                                         </div> 
-                                        <button onClick={handleCreateToken} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">Submit</button>
+                                        <button onClick={handleCreateToken} className="mt-2 bg-black text-white font-bold rounded-md cursor-pointer px-4 py-2">
+                                            { loadingCreateToken ? <Loading color="white" /> : "Submit" }
+                                        </button>
                                     </div>
                                 </div>
                             </>

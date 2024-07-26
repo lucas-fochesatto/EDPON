@@ -23,7 +23,5 @@ export default async function firstMint({ address, mintReferral, collectionAddre
         mintReferral
     })
 
-    console.log(lastToken)
-
     return parameters; // use writeContract(parameters) on frontend
 }
