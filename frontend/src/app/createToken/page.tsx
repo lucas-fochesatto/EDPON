@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useAccount, useBalance, useChainId, usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { useRouter } from 'next/navigation'
 import { Circle, CircleCheck, PlusIcon, Upload } from "lucide-react";
-import Header from '../components/Header';
+import Header from '../../components/Header';
 import './style.css'
 import { makeContractMetadata, makeImageTokenMetadata } from "@/lib/metadata";
 import createTokenAndCollection from "@/lib/createTokenAndCollection";
