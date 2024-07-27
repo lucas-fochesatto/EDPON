@@ -10,7 +10,7 @@ import { zora1155Implementation } from '../lib/abi/zora1155Implementation.js';
 import { dbapi } from '../lib/dbapi.js';
 import { zora } from 'viem/chains';
 import { publicClient } from '../lib/contracts.js';
-import { SHARE_INTENT, SHARE_TEXT, SHARE_NFT_TEXT, SHARE_EMBEDS, FRAME_URL, ZORA_EXPLORER, IPFS_ZORA_URL } from '../utils/links.js';
+import { SHARE_INTENT, SHARE_TEXT, SHARE_NFT_TEXT, SHARE_EMBEDS, FRAME_URL, DAPP_URL, ZORA_EXPLORER, IPFS_ZORA_URL } from '../utils/links.js';
 import getUri from '../lib/zora/getUri.js';
 import getLink from '../lib/metadata/getLink.js';
 import getNextTokenId from '../lib/zora/getNextTokenId.js';
@@ -43,16 +43,16 @@ app.frame('/', (c) => {
     image: '/gachamachine.gif',
     imageAspectRatio: '1:1',
     intents: [
-      <Button.Link href={`https://edpon-front.vercel.app`}>DAPP</Button.Link>,
-      <Button action='/verify/0'>PLAY 🕹️</Button>,
+      <Button.Link href={`${DAPP_URL}`}>DAPP</Button.Link>,
       <Button.Link href={`${SHARE_INTENT}${SHARE_TEXT}${SHARE_EMBEDS}${FRAME_URL}`}>CAST</Button.Link>,
+      <Button action='/verify/initial'>PLAY 🕹️</Button>,
     ],
-
   })
 })
 
-// Verify Farcaster fid 
+// verify and show collections 
 app.frame('/verify/:id', async (c) => {
+  // remember to refactor all code and properly use prevState
   const fid = c.frameData?.fid;
   if (fid) {
     const { verifiedAddresses } = await getFarcasterUserInfo(fid);
@@ -72,18 +72,39 @@ app.frame('/verify/:id', async (c) => {
     });
   }
 
-  const collectionsInfo = await dbapi.fetchArtCollections() as any
+  // const verifiedAddresses = (c.req.param('id') === 'initial') ? await getFarcasterUserInfo(c.frameData?.fid)
+  //   : (c.previousState as any).verifiedAddresses && (c.previousState as any).verifiedAddresses.length > 0 ? (c.previousState as any).verifiedAddresses
+  //     : ((c.previousState as any).verifiedAddresses = await getFarcasterUserInfo(c.frameData?.fid));
 
-  c.deriveState((prevState: any) => {
-    prevState.collections = collectionsInfo as any;
-  })
+  // c.deriveState((prevState: any) => {
+  //   prevState.verifiedAddresses = verifiedAddresses;
+  // });
 
-  const index = Number(c.req.param('id'));
+  // if (!verifiedAddresses || verifiedAddresses.length === 0) {
+  //   return c.res({
+  //     title,
+  //     image: '/insert-token.gif',
+  //     imageAspectRatio: '1:1',
+  //     intents: [
+  //       <Button action={`https://verify.warpcast.com/verify/${c.frameData?.fid}`}>VERIFY WALLET</Button>,
+  //       <Button.Reset>RESET</Button.Reset>,
+  //     ],
+  //   });
+  // }
 
-  const collections =
-    (c.previousState as any).collections && (c.previousState as any).collections.length > 0
-      ? (c.previousState as any).collections
-      : (await dbapi.fetchArtCollections());
+  const index = Number(c.req.param('id')) || 0;
+
+  const collections = await dbapi.fetchArtCollections()
+
+  // const collections = c.req.param('id') === 'initial' ? await dbapi.fetchArtCollections()
+  //   : (c.previousState as any).collections && (c.previousState as any).collections.length > 0 ? (c.previousState as any).collections
+  //     : (c.deriveState(async (prevState: any) => {
+  //       prevState.collections = await dbapi.fetchArtCollections();
+  //     }));
+
+  // c.deriveState((prevState: any) => {
+  //   prevState.collections = collections;
+  // });
 
   const boundedIndex = ((index % collections.length) + collections.length) % collections.length;
   const currentCollection = collections[boundedIndex];
@@ -214,7 +235,7 @@ app.frame('/loading/:collection/:tokenId/:txId/', async (c) => {
   else {
     return c.res({
       title,
-      image: `/loading-screen${Math.floor(Math.random() * 5) + 1}.gif`,
+      image: `/loading-screen${Math.floor(Math.random() * 3) + 1}.gif`,
       imageAspectRatio: '1:1',
       intents: [
         <Button action={`/loading/${collection}/${tokenId}/${c.transactionId}`}>REFRESH 🔄️</Button>,
@@ -245,31 +266,68 @@ app.frame('/result/:collection/:id/:txId', async (c) => {
       src: `/errorImg.jpeg`
     };
   }
-
+  
   return c.res({
     title,
     image: `${image.src || '/errorImg.jpeg'}`,
     imageAspectRatio: '1:1',
     intents: [
-      <Button.Link href={`${SHARE_INTENT}${SHARE_NFT_TEXT}${SHARE_EMBEDS}${FRAME_URL}/share/${image.src.split(IPFS_ZORA_URL)[1] || `errorImg.jpeg`}`}>SHARE</Button.Link>,
-      <Button.Link href={`${ZORA_EXPLORER}/tx/${txId}`}>CHECK ETHSCAN</Button.Link>,
+      // <Button.Link href={`${SHARE_INTENT}${SHARE_NFT_TEXT}${SHARE_EMBEDS}${FRAME_URL}/share/${image.src.split(IPFS_ZORA_URL)[1] || `errorImg.jpeg`}`}>SHARE</Button.Link>,
+      <Button.Link href={`${SHARE_INTENT}${SHARE_NFT_TEXT}${SHARE_EMBEDS}${FRAME_URL}/share/${collection}/${tokenId}`}>SHARE</Button.Link>,
+      <Button.Link href={`${ZORA_EXPLORER}/tx/${txId}`}>ETHSCAN</Button.Link>,
       <Button.Reset>PLAY AGAIN🕹️</Button.Reset>,
     ],
   })
 })
 
-app.frame('/share/:ntfImg', async (c) => {
-  const nftImg = `${IPFS_ZORA_URL}${c.req.param('nftImg')}`;
+// poorly done, but it works
+app.frame('/share/:collection/:id', async (c) => {
+  const collection = c.req.param('collection') as `0x${string}`;
+  const tokenId = c.req.param('id');
+
+  let image;
+  try {
+    const uri = await getUri(collection, BigInt(tokenId));
+    const urlLink = getLink(uri);
+    const response = await fetch(urlLink);
+    const data = await response.json();
+    const { image: responseImage } = data;
+    const src = getLink(responseImage);
+    image = {
+      src: `${src}`,
+    };
+  } catch (error) {
+    console.log(error);
+    image = {
+      src: `/errorImg.jpeg`
+    };
+  }
 
   return c.res({
     title,
-    image: `${nftImg || '/test.png'}`,
+    image: `${image.src || '/test.png'}`,
     imageAspectRatio: '1:1',
     intents: [
       <Button.Reset>TRY IT OUT!! 🕹️</Button.Reset>,
     ],
   })
 })
+
+// try to fix later
+// app.frame('/share/:ntfImg', async (c) => {
+//   const nftImg = `${IPFS_ZORA_URL}${c.req.param('nftImg')}`;
+
+//   console.log(nftImg);
+
+//   return c.res({
+//     title,
+//     image: `${nftImg || '/test.png'}`,
+//     imageAspectRatio: '1:1',
+//     intents: [
+//       <Button.Reset>TRY IT OUT!! 🕹️</Button.Reset>,
+//     ],
+//   })
+// })
 
 if (process.env.NODE_ENV !== 'production') {
   devtools(app, { serveStatic });
