@@ -1,13 +1,12 @@
 'use client'
 
-import { zoraCreator1155ImplABI } from "@zoralabs/protocol-deployments"
+import { zoraCreator1155ImplABI } from "@zoralabs/protocol-deployments";
 
 import { useEffect, useState } from "react";
 import { useAccount, useBalance, useChainId, usePublicClient, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import { Upload } from "lucide-react";
-import Header from '../../components/Header';
-import './style.css'
+import './style.css';
 import { makeContractMetadata, makeImageTokenMetadata } from "@/lib/metadata";
 import createTokenAndCollection from "@/lib/createTokenAndCollection";
 import Loading from "@/components/Loading";
@@ -52,8 +51,8 @@ export default function CreateToken() {
     const { address } = useAccount();
     const chainId = useChainId();
     const publicClient = usePublicClient();
-    const { writeContract, data: hash, isPending } = useWriteContract();
-    const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+    const { writeContract, data: hash } = useWriteContract();
+    const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
     const [collections, setCollections]  = useState<ArtCollectionType[]>([]);
     const [tokens, setTokens] = useState<TokenType[]>([]);
@@ -307,10 +306,10 @@ export default function CreateToken() {
 
         if(!balance.isSuccess) return
 
-        /* if(balance.data.value < parseEther("0.000777")) {
+        if(balance.data.value < parseEther("0.000777")) {
             alert("You need at least 0.000777 ETH. You will receive 0.000444 ETH back at zora.co")
             return
-        } */
+        }
 
         if(loadingCreateToken) return
 
@@ -356,12 +355,11 @@ export default function CreateToken() {
 
         setCreateTokenMessage("Please mint it")
         const parameters = await firstMint({ address: address!, mintReferral, collectionAddress, chainId, publicClient });
+                
         writeContract(parameters)
     }
 
     return (
-        <>
-        <Header />
         <div className="p-8 flex flex-col items-center h-[calc(100vh-64px-72px)] background">
             <div className="flex flex-col gap-8"> 
                 <div className="flex flex-col gap-4">
@@ -374,21 +372,25 @@ export default function CreateToken() {
                         loadingCollections ? <Fetching width="w-[50%]"/> :
                         <div className="w-[50%] border border-stone-900 rounded-md bg-white p-4">
                             <h1 className="text-xl font-bold mb-4">Your collections on EDPON</h1>
-                            <div className="h-[calc(50%-28px-1rem)] grid grid-cols-4 gap-[5px] overflow-y-auto">
-                                {collections.map((collection, index) => (        
-                                    <Collection collection={collection} index={index} isSelected={selectedCollectionIndex == index} setSelectedCollectionIndex={setSelectedCollectionIndex} key={index}/>
-                                ))}
-                                <AddCollectionButton index={collections.length} isSelected={selectedCollectionIndex == collections.length} setSelectedCollectionIndex={setSelectedCollectionIndex}/>
+                            <div className="h-[calc(50%-28px-1rem)] overflow-y-auto">
+                                <div className="grid grid-cols-4 gap-[5px]">
+                                    {collections.map((collection, index) => (        
+                                        <Collection collection={collection} index={index} isSelected={selectedCollectionIndex == index} setSelectedCollectionIndex={setSelectedCollectionIndex} key={index}/>
+                                    ))}
+                                    <AddCollectionButton index={collections.length} isSelected={selectedCollectionIndex == collections.length} setSelectedCollectionIndex={setSelectedCollectionIndex}/>
+                                </div>
                             </div>
                             { selectedCollectionIndex != collections.length && <h1 className="text-xl font-bold mb-4">Tokens on this collection</h1> }
                             { loadingTokens ? <Fetching width="w-[100%]" border=""/>  :
                                 <>
                                 {
                                     selectedCollectionIndex != collections.length &&
-                                    <div className="h-[calc(50%-28px-1rem)] grid grid-cols-4 gap-[5px] overflow-y-auto">
-                                        { tokens[selectedCollectionIndex].tokens.map((token, index) => 
-                                            <Token key={index} token={token} collection={collections[selectedCollectionIndex]} />
-                                        ) }
+                                    <div className="h-[calc(50%-28px-1rem)] overflow-y-auto">
+                                        <div className=" grid grid-cols-4 gap-[5px]">
+                                            { tokens[selectedCollectionIndex].tokens.map((token, index) => 
+                                                <Token key={index} token={token} collection={collections[selectedCollectionIndex]} />
+                                            ) }
+                                        </div>
                                     </div>
                                 }
                                 </>
@@ -481,7 +483,6 @@ export default function CreateToken() {
                                                 <Upload size={32} />
                                                 </>
                                             }
-                                            
                                         </div>
                                     </label>
                                     <input type="file" accept=".png, .jpg, .jpeg, .gif" id="art-upload" onChange={handleArtChange} hidden />
@@ -500,7 +501,6 @@ export default function CreateToken() {
                     }
                 </div> 
             </div>
-        </div>
-        </>
+        </div> 
     )
 }
