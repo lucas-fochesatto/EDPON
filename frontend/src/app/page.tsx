@@ -17,7 +17,7 @@ export default function Home() {
           <p className="text-5xl text-white font-black">to our Gachapon!</p>
         </div>
         <Button />
-        <img src="landing-background.png" alt="" className="-z-10 absolute w-full object-contain"/>
+        <img src="landing-background2.png" alt="" className="-z-10 absolute w-full object-contain"/>
       </div>
       <div className="w-full flex flex-col items-center mt-8">
         <div className="flex justify-center items-center gap-24">
