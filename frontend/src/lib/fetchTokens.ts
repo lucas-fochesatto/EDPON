@@ -9,6 +9,8 @@ type fetchTokensArgs = {
 export default async function fetchTokens({ collectionAddress, chainId, publicClient } : fetchTokensArgs) {
     const collectorClient = createCollectorClient({ chainId, publicClient });
 
+    if(!collectionAddress) return [];
+
     const tokens = await collectorClient.getTokensOfContract({
         tokenContract: collectionAddress,
     });

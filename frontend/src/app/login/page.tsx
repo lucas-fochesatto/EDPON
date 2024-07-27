@@ -25,9 +25,11 @@ export default function Login() {
   };
 
   return (
-    <div className="h-[100vh] flex flex-col items-center justify-center gap-8">
-      <h1 className="text-3xl font-bold">We almost got your collection</h1>
-      <p className="text-xl">You just have to login!</p>
+    <div className="h-[calc(100vh-64px-72px)] flex flex-col items-center justify-center gap-8">
+      <div className="flex flex-col items-center justify-center gap-4">
+        <h1 className="text-3xl font-bold">We almost got your collection</h1>
+        <p className="text-xl">You just have to login!</p>
+      </div>
 
       <ConnectButton label="Login" accountStatus={"address"} chainStatus={"none"} />
 
